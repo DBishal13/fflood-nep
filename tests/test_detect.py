@@ -41,7 +41,9 @@ def test_run_detection_reports_waiting_when_post_event_scene_is_missing(tmp_path
         return None if start == cfg.post_start else pre_item
 
     output_dir = tmp_path / "out"
-    report = detect.run_detection(config, output_dir, search=fake_search, fetch_gauge=_fake_gauge_bulletin)
+    report = detect.run_detection(
+        config, output_dir, search=fake_search, fetch_gauge=_fake_gauge_bulletin, fetch_ems=lambda: None
+    )
 
     assert report["status"] == "waiting_for_post_event_scene"
     assert report["preview"]["pre_event"]["item"] == "pre-1"
@@ -59,9 +61,12 @@ def test_run_detection_reports_no_river_gauges_when_fetch_fails(tmp_path):
         return None
 
     output_dir = tmp_path / "out"
-    report = detect.run_detection(config, output_dir, search=fake_search, fetch_gauge=lambda: None)
+    report = detect.run_detection(
+        config, output_dir, search=fake_search, fetch_gauge=lambda: None, fetch_ems=lambda: None
+    )
 
     assert report["river_gauges"] is None
+    assert report["ems_activation"] is None
     assert report["preview"] is None
 
 
@@ -102,7 +107,9 @@ def test_run_detection_writes_outputs_when_both_scenes_are_present(tmp_path, mon
     )
 
     output_dir = tmp_path / "out"
-    report = detect.run_detection(config, output_dir, search=fake_search, fetch_gauge=_fake_gauge_bulletin)
+    report = detect.run_detection(
+        config, output_dir, search=fake_search, fetch_gauge=_fake_gauge_bulletin, fetch_ems=lambda: None
+    )
 
     assert report["status"] == "complete"
     assert report["flood_polygons"] >= 1

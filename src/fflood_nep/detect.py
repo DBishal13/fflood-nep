@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from . import change_detection, exposure, gauge, pc_client
+from . import change_detection, ems, exposure, gauge, pc_client
 from .config import EventConfig
 
 ASSUMPTIONS = [
@@ -11,13 +11,15 @@ ASSUMPTIONS = [
     "OpenStreetMap coverage in the exposure layers reflects volunteer mapping activity and changes between "
     "the HOT dataset's daily rebuilds; treat exposure counts as approximate, not authoritative.",
     gauge.GAUGE_CAVEAT,
+    ems.EMS_CAVEAT,
     "Flood inundation near Rasuwa has independently been confirmed by optical satellite imagery "
     "(India's NRSC/ISRO, Resourcesat-2A AWiFS, 26 Aug 2026) -- this project's own SAR-based extent is "
     "complementary, not the first evidence of the flood. The triggering mechanism is still actively "
     "disputed as of 26 Aug 2026: competing hypotheses include an ice/snow-rock avalanche blocking the "
     "Lhende River (possibly triggered by a M4.4 earthquake at 08:37 local time, ~47km north of "
-    "Gosainkunda) and a glacial lake outburst from the Puripu Glacier -- treat either as preliminary "
-    "until a detailed assessment is published.",
+    "Gosainkunda) and a glacial lake outburst from the Puripu Glacier; Copernicus EMS's own activation "
+    "request for EMSR927 separately cites a GLOF as the reason for activation -- treat all of these as "
+    "preliminary until a detailed assessment is published.",
     "Do not use this output as the sole basis for evacuation or rescue decisions.",
 ]
 
@@ -51,6 +53,17 @@ def _gauge_section(fetch_gauge) -> dict | None:
             }
             for station in bulletin.get("stations", [])
         ],
+    }
+
+
+def _ems_section(fetch_ems) -> dict | None:
+    activation = fetch_ems()
+    if activation is None:
+        return None
+    return {
+        "source": ems.EMS_ACTIVATION_URL,
+        "source_note": ems.EMS_CAVEAT,
+        **ems.summarize_activation(activation),
     }
 
 
@@ -92,13 +105,16 @@ def run_detection(
     threshold_db: float = -3.0,
     with_exposure: bool = True,
     with_gauge: bool = True,
+    with_ems: bool = True,
     search=pc_client.find_best_item,
     fetch_gauge=gauge.fetch_gauge_status,
+    fetch_ems=ems.fetch_ems_activation,
 ) -> dict:
     output_dir.mkdir(parents=True, exist_ok=True)
     asset_key = polarization.lower()
 
     river_gauges = _gauge_section(fetch_gauge) if with_gauge else None
+    ems_activation = _ems_section(fetch_ems) if with_ems else None
 
     pre_item = search(config, config.pre_start, config.pre_end)
     post_item = search(config, config.post_start, config.post_end)
@@ -110,6 +126,7 @@ def run_detection(
             "status": f"waiting_for_{missing}_event_scene",
             "preview": _preview_section(pre_item, post_item, config.bbox),
             "river_gauges": river_gauges,
+            "ems_activation": ems_activation,
             "assumptions": ASSUMPTIONS,
         }
         (output_dir / "detection_report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
@@ -159,6 +176,7 @@ def run_detection(
         "flood_area_m2": float(flood_extent["area_m2"].sum()) if len(flood_extent) else 0.0,
         "preview": _preview_section(pre_item, post_item, config.bbox),
         "river_gauges": river_gauges,
+        "ems_activation": ems_activation,
         "assumptions": ASSUMPTIONS,
     }
     (output_dir / "detection_report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")

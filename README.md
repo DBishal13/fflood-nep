@@ -33,6 +33,8 @@ If no post-event Sentinel-1 scene exists yet for the corridor (likely for the fi
 
 `detection_report.json` also embeds the latest DHM river-gauge readings for the corridor, pulled from a community-maintained mirror (https://github.com/nirajbhusal/rasuwa-flood-bulletin) rather than SAR imagery, so it's available even while `detect` is still waiting on a post-event scene (`--no-gauge` to skip). **Check each station's `washed`/`silent` flags before treating `level_m` as current** — a washed-out gauge keeps reporting its last reading before failing, which can look like an active alert when it isn't.
 
+It also embeds a snapshot of the Copernicus EMS Rapid Mapping activation for this event (EMSR927, `--no-ems` to skip) — a real, independent EU-authorised activation, not something this project runs itself. Its own products may not be delivered yet; check each row's `status`/`expected_delivery`. Refresh just this snapshot with `fflood-nep ems --output docs/data/ems_activation.json` (its API isn't CORS-open, so the web UI reads that committed file rather than fetching it live).
+
 ## Web UI
 
 **Live at https://dbishal13.github.io/fflood-nep/** — an interactive map dashboard ("Corridor Watch") built from this project's data sources, served as a static site from `docs/` via GitHub Pages.
@@ -43,6 +45,7 @@ It's a single static HTML/CSS/JS page (MapLibre GL JS + the PMTiles protocol plu
 - River gauges: fetched live from the same DHM community mirror `detect` uses.
 - The SAR panel: runs the same STAC search as `pc_client.find_best_item` client-side against Planetary Computer, so it always reflects the actual latest scene, not a snapshot.
 - Flood extent: fetches `docs/data/flood_extent.geojson`. That file doesn't exist yet (no post-event scene has landed) — once a real `fflood-nep detect` run produces `flood_extent.gpkg`, convert it to GeoJSON and commit it to that path; the map picks it up automatically, no code change needed.
+- Independent confirmation: fetches `docs/data/ems_activation.json`, a static snapshot of the Copernicus EMS EMSR927 activation (its API isn't CORS-open, unlike the other sources above) refreshed by re-running `fflood-nep ems`; the NRSC/ISRO card next to it is a static citation, not fetched at all.
 
 Clicking any map feature opens a selection panel with its real attributes (category, name, OSM/Overture source). Basemap is [OpenFreeMap](https://openfreemap.org) (no API key). Everything is theme-aware (light/dark, including the basemap style itself).
 

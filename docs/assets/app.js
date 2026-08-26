@@ -439,8 +439,88 @@ function addFloodExtentLayer(geojson) {
   map.addLayer({ id: "flood-extent-line", type: "line", source: "flood-extent", paint: { "line-color": cssVar("--danger"), "line-width": 1.5 } });
 }
 
+// ==================== INDEPENDENT CONFIRMATION ====================
+
+function fmtUtc(iso) {
+  if (!iso) return "unknown";
+  const d = new Date(iso.endsWith("Z") ? iso : iso + "Z");
+  return d.toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "UTC" }) + " UTC";
+}
+
+function nrscCard() {
+  const card = document.createElement("div");
+  card.className = "gcard";
+  card.innerHTML =
+    '<div class="gcard-top">' +
+      '<div>' +
+        '<div class="gcard-name">NRSC/ISRO · Resourcesat-2A AWiFS</div>' +
+        '<div class="gcard-district">Optical satellite, India</div>' +
+      "</div>" +
+      '<span class="chip chip-ok">Confirmed inundation</span>' +
+    "</div>" +
+    '<div style="font-size:.8rem; color:var(--text-dim); margin:8px 0 12px; line-height:1.45;">' +
+      "India's NRSC published a pre/post comparison (Sentinel‑2, 24 Aug vs. Resourcesat‑2A AWiFS, 26 Aug) showing " +
+      "visible inundation along the Trishuli River — independent confirmation, outside this project's own SAR pipeline. " +
+      "No stable public URL for that specific product was found; linked below is NRSC's general disaster-mapping portal." +
+    "</div>" +
+    '<div class="gcard-foot">' +
+      "<span>Cited 26 Aug 2026</span>" +
+      '<a href="https://bhuvan-app1.nrsc.gov.in/bhuvandisaster/" target="_blank" rel="noopener">NRSC DMSG portal →</a>' +
+    "</div>";
+  return card;
+}
+
+function emsCard(snapshot) {
+  const card = document.createElement("div");
+  card.className = "gcard";
+  if (!snapshot || !snapshot.activation) {
+    card.innerHTML =
+      '<div class="gcard-top"><div><div class="gcard-name">Copernicus EMS · EMSR927</div>' +
+      '<div class="gcard-district">Flood in Nepal</div></div><span class="chip chip-warn">Snapshot unavailable</span></div>' +
+      '<div style="font-size:.8rem; color:var(--text-dim); margin-top:8px;">' +
+      "This project reads a periodically-refreshed static snapshot of the activation (its backend API isn't " +
+      "CORS-open for a live browser fetch) — <code class=\"mono\">docs/data/ems_activation.json</code> hasn't been generated yet. " +
+      'Run <code class="mono">fflood-nep ems</code> to publish it.</div>';
+    return card;
+  }
+  const a = snapshot.activation;
+  const delivered = a.products.some((p) => p.download_path);
+  const statusChip = delivered ? '<span class="chip chip-ok">Products delivered</span>' : '<span class="chip chip-warn">Awaiting delivery</span>';
+  const rows = a.products
+    .map((p) => "<dt>" + p.aoi_name + "</dt><dd class=\"mono\">" + (p.sensors || []).join("/") + " · " + (p.download_path ? "Delivered" : "Waiting") + " · exp. " + fmtUtc(p.expected_delivery) + "</dd>")
+    .join("");
+  card.innerHTML =
+    '<div class="gcard-top">' +
+      '<div>' +
+        '<div class="gcard-name">Copernicus EMS · ' + a.code + "</div>" +
+        '<div class="gcard-district">' + a.name + " · " + (a.sub_category || a.category) + "</div>" +
+      "</div>" + statusChip +
+    "</div>" +
+    '<div style="font-size:.8rem; color:var(--text-dim); margin:8px 0 12px; line-height:1.45;">' +
+      "EU-authorised rapid-mapping activation, requested " + fmtUtc(a.activation_time) + ". Its own activation reason " +
+      'cites a GLOF as the trigger — one more input to the still-disputed cause debate.' +
+    "</div>" +
+    '<dl class="kv-grid" style="border-top:none; padding-top:0; font-size:.74rem;">' + rows + "</dl>" +
+    '<div class="gcard-foot">' +
+      "<span>" + (delivered ? "Products available" : "Not yet delivered") + "</span>" +
+      '<a href="' + a.activation_page + '" target="_blank" rel="noopener">Activation page →</a>' +
+    "</div>";
+  return card;
+}
+
+function loadConfirmations() {
+  const grid = document.getElementById("confirmationGrid");
+  grid.innerHTML = "";
+  grid.appendChild(nrscCard());
+  fetch("data/ems_activation.json")
+    .then((r) => (r.ok ? r.json() : null))
+    .catch(() => null)
+    .then((snapshot) => grid.appendChild(emsCard(snapshot)));
+}
+
 // ==================== INIT ====================
 
 loadGauges();
 loadSar();
+loadConfirmations();
 checkFloodExtent();

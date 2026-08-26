@@ -1,0 +1,43 @@
+{
+  "source": "https://mapping.emergency.copernicus.eu/backend/dashboard-api/public-activations/?code=EMSR927",
+  "source_note": "Copernicus EMS Rapid Mapping activation EMSR927 ('Flood in Nepal') is a real, EU-authorised independent activation for this exact event, requested by DG ECHO on 26 Aug 2026 -- but its own flood-extent/damage-assessment products are not necessarily delivered yet; check each row's status and expected_delivery before treating it as a finished dataset. Its backend API is not CORS-open, so the web UI reads a periodically-refreshed static snapshot (docs/data/ems_activation.json), not a live fetch -- re-run `fflood-nep ems` to refresh it.",
+  "activation": {
+    "code": "EMSR927",
+    "name": "Flood in Nepal",
+    "reason": "On the 26 August 2026, a flash flood reportedly triggered by a Glacial Lake Outburst Flood (GLOF) in Nepal has caused significant damage in Rasuwa District. There is a 7 m-deep water level recorded by monitoring stations. Copernicus EMS Rapid Mapping is requested to provide flood extent and damage assessment emergency mapping.",
+    "category": "Flood",
+    "sub_category": "Flash flood",
+    "event_time": "2026-08-25T22:00:00",
+    "activation_time": "2026-08-26T09:53:00",
+    "closed": false,
+    "report_link": "https://storymaps.arcgis.com/stories/f76baefadfa74d6d9a18265875f48870",
+    "activation_page": "https://mapping.emergency.copernicus.eu/activations/EMSR927/",
+    "products_zip": "https://rapidmapping.emergency.copernicus.eu/backend/EMSR927/EMSR927_products.zip",
+    "products": [
+      {
+        "aoi_name": "Syapru Besi",
+        "aoi_number": 1,
+        "product_type": "DEL",
+        "status": "W",
+        "expected_delivery": "2026-08-27T19:30:00",
+        "delivery_time": null,
+        "download_path": null,
+        "sensors": [
+          "ICEYE"
+        ]
+      },
+      {
+        "aoi_name": "Timure",
+        "aoi_number": 2,
+        "product_type": "DEL",
+        "status": "W",
+        "expected_delivery": "2026-08-27T19:30:00",
+        "delivery_time": null,
+        "download_path": null,
+        "sensors": [
+          "ICEYE"
+        ]
+      }
+    ]
+  }
+}
