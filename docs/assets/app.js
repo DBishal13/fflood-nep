@@ -1,7 +1,7 @@
 "use strict";
 
 // ---- constants (mirror config/rasuwa-2026-08-26.toml) ----
-const AOI_BBOX = [85.10, 27.85, 85.75, 28.45];
+const AOI_BBOX = [85.02, 27.81, 85.42, 28.32];
 const PRE_WINDOW = ["2026-08-01T00:00:00Z", "2026-08-25T23:59:59Z"];
 const POST_WINDOW = ["2026-08-26T00:00:00Z", "2026-09-05T23:59:59Z"];
 

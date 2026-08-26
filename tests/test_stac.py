@@ -11,7 +11,7 @@ CONFIG = Path(__file__).parents[1] / "config" / "rasuwa-2026-08-26.toml"
 def test_event_config_loads_and_validates():
     config = EventConfig.from_toml(CONFIG)
     assert config.name == "rasuwa-2026-08-26"
-    assert config.bbox == (85.10, 27.85, 85.75, 28.45)
+    assert config.bbox == (85.02, 27.81, 85.42, 28.32)
 
 
 def test_stac_query_is_cql2_json():

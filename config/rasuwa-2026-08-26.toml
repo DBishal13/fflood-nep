@@ -4,8 +4,12 @@ description = "Bhote Koshi and Trishuli flash flood rapid mapping"
 event_date = "2026-08-26"
 
 [aoi]
-# Approximate corridor envelope; refine against official activation AOIs.
-bbox = [85.10, 27.85, 85.75, 28.45]
+# Tight envelope around HOT's actual hot_flood_npl_aoi.geojson corridor polygon
+# (bbox [85.058136, 27.843973, 85.387889, 28.287426] as fetched 2026-08-27), padded ~3km on
+# each side. The original placeholder here [85.10, 27.85, 85.75, 28.45] undershot the corridor's
+# western/southern edge and wildly overshot its NE side -- visible on the web UI as SAR imagery
+# and the AOI outline not agreeing on where the corridor actually is.
+bbox = [85.02, 27.81, 85.42, 28.32]
 
 [data]
 stac_url = "https://planetarycomputer.microsoft.com/api/stac/v1"
