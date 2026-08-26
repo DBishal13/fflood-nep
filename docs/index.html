@@ -83,12 +83,18 @@
     <div class="sar-shell">
       <div class="radar-card">
         <div class="radar-toolbar">
-          <div class="seg">
-            <button id="preBtn" class="active">Pre-event</button>
-            <button id="postBtn" disabled>Post-event</button>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <div class="seg">
+              <button id="preBtn" class="active">Pre-event</button>
+              <button id="postBtn" disabled>Post-event</button>
+            </div>
+            <div class="seg">
+              <button id="sarLayerBtn" class="active">SAR</button>
+              <button id="landcoverLayerBtn">Land cover</button>
+            </div>
           </div>
           <div style="display:flex; align-items:center; gap:12px;">
-            <span class="mono" style="font-size:.72rem; color:var(--text-faint);">VV+VH · 10m · sentinel-1-rtc</span>
+            <span class="mono" id="sarLegend" style="font-size:.72rem; color:var(--text-faint);">VV+VH · 10m · sentinel-1-rtc</span>
             <button class="map-reset" id="sarReset">Recenter</button>
           </div>
         </div>
@@ -165,6 +171,6 @@
 
 <script src="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3/dist/pmtiles.js"></script>
-<script src="assets/app.js?v=20260827b"></script>
+<script src="assets/app.js?v=20260827c"></script>
 </body>
 </html>

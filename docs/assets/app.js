@@ -9,6 +9,7 @@ const HOT_PMTILES_URL = "https://production-raw-data-api.s3.amazonaws.com/ISO3/N
 const HOT_AOI_URL = "https://production-raw-data-api.s3.amazonaws.com/ISO3/NPL/combined/hot_flood_npl_aoi.geojson";
 const GAUGE_URL = "https://raw.githubusercontent.com/nirajbhusal/rasuwa-flood-bulletin/main/dhm-rivers.json";
 const PC_STAC_SEARCH_URL = "https://planetarycomputer.microsoft.com/api/stac/v1/search";
+const WORLDCOVER_COLLECTION = "esa-worldcover";
 
 const CATEGORIES = [
   { key: "buildings", label: "Buildings" },
@@ -465,10 +466,90 @@ window.sarMap = sarMap;
 
 let sarImageBounds = null;
 let sarMapFitted = false;
+let currentSarUrl = null;
+let currentLandcoverUrl = null;
+let sarBaseMode = "sar";
 
 document.getElementById("sarReset").addEventListener("click", () => {
   sarMap.fitBounds(sarImageBounds || AOI_BBOX, { padding: 24, duration: 400 });
 });
+
+// ESA WorldCover -- the same land-cover classification this project's own detect pipeline uses
+// to mask permanent water (see pc_client.read_worldcover) -- as an alternative base image to the
+// raw SAR backscatter composite. Backscatter alone doesn't read as terrain to most people; a real
+// land-cover map (forest/grass/built-up/water) does, and it's already part of this project's logic.
+let worldcoverPreviewPromise = null;
+function worldcoverPreviewUrl() {
+  if (!worldcoverPreviewPromise) {
+    worldcoverPreviewPromise = fetch(PC_STAC_SEARCH_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ collections: [WORLDCOVER_COLLECTION], bbox: AOI_BBOX, limit: 1 }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        const item = data && data.features && data.features[0];
+        return item ? previewUrl(item, AOI_BBOX, 1024) : null;
+      })
+      .catch(() => null);
+  }
+  return worldcoverPreviewPromise;
+}
+
+function ensureSarLayers(url, coords) {
+  sarMap.addSource("sar-image", { type: "image", url, coordinates: coords });
+  sarMap.addLayer({ id: "sar-image-layer", type: "raster", source: "sar-image" });
+
+  // The actual mapped river channel (HOT/OSM waterways), distinct from the AOI corridor buffer.
+  sarMap.addSource("sar-hot", { type: "vector", url: "pmtiles://" + HOT_PMTILES_URL });
+  sarMap.addLayer({
+    id: "sar-river-line", type: "line", source: "sar-hot", "source-layer": "hot_flood_npl",
+    filter: ["all", ["==", ["get", "category"], "waterways"], ["==", ["geometry-type"], "LineString"]],
+    paint: { "line-color": "#00E5FF", "line-width": 1.4, "line-opacity": 0.9 },
+  });
+
+  sarMap.addSource("sar-aoi", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+  sarMap.addLayer({
+    id: "sar-aoi-line", type: "line", source: "sar-aoi",
+    paint: { "line-color": cssVar("--select"), "line-width": 2.5 },
+  });
+  loadAoiGeojsonOnce().then((geojson) => { if (geojson) sarMap.getSource("sar-aoi").setData(geojson); });
+}
+
+function applyBaseImage() {
+  const url = sarBaseMode === "sar" ? currentSarUrl : currentLandcoverUrl;
+  if (!url || !sarImageBounds) return;
+  const [minx, miny, maxx, maxy] = sarImageBounds;
+  const coords = [[minx, maxy], [maxx, maxy], [maxx, miny], [minx, miny]];
+
+  const apply = () => {
+    if (sarMap.getSource("sar-image")) sarMap.getSource("sar-image").updateImage({ url, coordinates: coords });
+    else ensureSarLayers(url, coords);
+    if (!sarMapFitted) {
+      sarMap.fitBounds(sarImageBounds, { padding: 24, duration: 0 });
+      sarMapFitted = true;
+    }
+  };
+  if (sarMap.isStyleLoaded()) apply();
+  else sarMap.once("load", apply);
+}
+
+function setSarBaseMode(mode) {
+  sarBaseMode = mode;
+  document.getElementById("sarLayerBtn").classList.toggle("active", mode === "sar");
+  document.getElementById("landcoverLayerBtn").classList.toggle("active", mode === "landcover");
+  const legend = document.getElementById("sarLegend");
+  if (mode === "sar") {
+    legend.textContent = "VV+VH · 10m · sentinel-1-rtc";
+    legend.title = "";
+  } else {
+    legend.textContent = "ESA WorldCover 10m 2021";
+    legend.title = "green = tree · yellow = grass/crop · pink = built-up · blue = water · gray = bare";
+  }
+  applyBaseImage();
+}
+document.getElementById("sarLayerBtn").addEventListener("click", () => setSarBaseMode("sar"));
+document.getElementById("landcoverLayerBtn").addEventListener("click", () => setSarBaseMode("landcover"));
 
 function showScene(item, label, bbox) {
   const caption = document.getElementById("radarCaption");
@@ -482,35 +563,18 @@ function showScene(item, label, bbox) {
   }
   loading.style.display = "none";
 
-  // image source coordinates: top-left, top-right, bottom-right, bottom-left, in [lon, lat]
-  const [minx, miny, maxx, maxy] = bbox;
-  const coords = [[minx, maxy], [maxx, maxy], [maxx, miny], [minx, miny]];
-
-  const applySource = () => {
-    if (sarMap.getSource("sar-image")) {
-      sarMap.getSource("sar-image").updateImage({ url, coordinates: coords });
-    } else {
-      sarMap.addSource("sar-image", { type: "image", url, coordinates: coords });
-      sarMap.addLayer({ id: "sar-image-layer", type: "raster", source: "sar-image" });
-      sarMap.addSource("sar-aoi", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-      sarMap.addLayer({
-        id: "sar-aoi-line", type: "line", source: "sar-aoi",
-        paint: { "line-color": cssVar("--select"), "line-width": 2.5 },
-      });
-      loadAoiGeojsonOnce().then((geojson) => { if (geojson) sarMap.getSource("sar-aoi").setData(geojson); });
-    }
-    if (!sarMapFitted) {
-      sarMap.fitBounds(bbox, { padding: 24, duration: 0 });
-      sarMapFitted = true;
-    }
-  };
-  if (sarMap.isStyleLoaded()) applySource();
-  else sarMap.once("load", applySource);
+  currentSarUrl = url;
   sarImageBounds = bbox;
+  applyBaseImage();
+  worldcoverPreviewUrl().then((wcUrl) => {
+    currentLandcoverUrl = wcUrl;
+    if (sarBaseMode === "landcover") applyBaseImage();
+  });
 
   const dt = item.properties && item.properties.datetime;
   caption.innerHTML =
-    "Sentinel‑1 RTC composite (" + label.replace("_", "-") + ") — scroll or drag to inspect; outline shows the exact HOT AOI boundary · " +
+    "Sentinel‑1 RTC composite (" + label.replace("_", "-") + ") — scroll or drag to inspect; cyan traces the mapped " +
+    "river channel, outline shows the exact HOT AOI boundary · " +
     '<span class="mono">' + item.id + (dt ? " · " + dt : "") + "</span>";
 }
 
