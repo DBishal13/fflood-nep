@@ -33,6 +33,19 @@ If no post-event Sentinel-1 scene exists yet for the corridor (likely for the fi
 
 `detection_report.json` also embeds the latest DHM river-gauge readings for the corridor, pulled from a community-maintained mirror (https://github.com/nirajbhusal/rasuwa-flood-bulletin) rather than SAR imagery, so it's available even while `detect` is still waiting on a post-event scene (`--no-gauge` to skip). **Check each station's `washed`/`silent` flags before treating `level_m` as current** — a washed-out gauge keeps reporting its last reading before failing, which can look like an active alert when it isn't.
 
+## Web UI
+
+**Live at https://dbishal13.github.io/fflood-nep/** — an interactive map dashboard ("Corridor Watch") built from this project's data sources, served as a static site from `docs/` via GitHub Pages.
+
+It's a single static HTML/CSS/JS page (MapLibre GL JS + the PMTiles protocol plugin, both from CDN — no build step) with **no backend and no scheduled refresh job**, because every data source it uses turned out to be CORS-open and directly fetchable from the browser:
+
+- The map itself: HOT's live `hot_flood_npl.pmtiles` (one combined vector layer, 47k+ features, filterable by a `category` attribute into 11 toggleable layers — buildings, roads, waterways, bridges, health/education facilities, populated places, financial services, points of interest, cultural places, airports) and its AOI boundary, fetched directly from HOT's S3 bucket on every page load.
+- River gauges: fetched live from the same DHM community mirror `detect` uses.
+- The SAR panel: runs the same STAC search as `pc_client.find_best_item` client-side against Planetary Computer, so it always reflects the actual latest scene, not a snapshot.
+- Flood extent: fetches `docs/data/flood_extent.geojson`. That file doesn't exist yet (no post-event scene has landed) — once a real `fflood-nep detect` run produces `flood_extent.gpkg`, convert it to GeoJSON and commit it to that path; the map picks it up automatically, no code change needed.
+
+Clicking any map feature opens a selection panel with its real attributes (category, name, OSM/Overture source). Basemap is [OpenFreeMap](https://openfreemap.org) (no API key). Everything is theme-aware (light/dark, including the basemap style itself).
+
 ## Scope
 
 - Area: Bhote Koshi and Trishuli corridor in Rasuwa, Nuwakot, and Dhading; `detect` clips to HOT's precise 1 km river-corridor buffer.

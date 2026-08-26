@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Corridor Watch</title>
+<meta name="description" content="Live flood-corridor map and monitoring dashboard for the Bhote Koshi / Trishuli corridor, Rasuwa &amp; Nuwakot, Nepal.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛰️</text></svg>">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders:wght@500;600;700;800&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link href="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.css" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<div class="masthead">
+  <div class="masthead-inner">
+    <div class="wordmark">
+      <h1>Corridor&nbsp;Watch</h1>
+      <span class="loc">Bhote&nbsp;Koshi&nbsp;·&nbsp;Trishuli — Rasuwa &amp; Nuwakot, Nepal</span>
+    </div>
+    <div class="live-pill">
+      <span class="dot"></span>
+      <span id="liveStatus">Loading live data…</span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <section style="padding-top:36px;">
+    <div class="section-head">
+      <h2>Corridor map</h2>
+      <span class="section-sub">Live HOT/OpenStreetMap + Overture data via <a href="https://data.humdata.org/dataset/hot_flood_npl" target="_blank" rel="noopener">HDX</a> · click any feature to inspect it</span>
+    </div>
+
+    <div class="map-shell">
+      <div class="map-card">
+        <div class="map-toolbar">
+          <span class="basemap-credit">Basemap © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors, tiles by <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a></span>
+          <button class="map-reset" id="mapReset">Reset view</button>
+        </div>
+        <div id="map"></div>
+      </div>
+
+      <div class="side-stack">
+        <div class="legend-card">
+          <h3>Layers</h3>
+          <div class="legend-list" id="legendList"></div>
+        </div>
+        <div class="inspector-card">
+          <h3>Selected feature</h3>
+          <div id="inspector">
+            <p class="inspector-empty">Click a building, road, waterway, or facility on the map to see its details here.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Sentinel‑1 SAR</h2>
+      <span class="section-sub">Latest pass fetched live from Planetary Computer</span>
+    </div>
+    <div class="sar-shell">
+      <div class="radar-card">
+        <div class="radar-toolbar">
+          <div class="seg">
+            <button id="preBtn" class="active">Pre-event</button>
+            <button id="postBtn" disabled>Post-event</button>
+          </div>
+          <span class="mono" style="font-size:.72rem; color:var(--text-faint);">VV+VH · 10m · sentinel-1-rtc</span>
+        </div>
+        <div class="radar-frame" id="radarFrame">
+          <span class="radar-loading">Searching Planetary Computer…</span>
+        </div>
+        <div class="radar-caption" id="radarCaption"></div>
+      </div>
+
+      <div class="status-card">
+        <div>
+          <p class="eyebrow" style="margin-bottom:6px;">Detection status</p>
+          <div class="status-headline" id="detectionHeadline">Checking…</div>
+          <p class="status-body" id="detectionBody"></p>
+        </div>
+        <dl class="kv-grid">
+          <dt>Collection</dt><dd class="mono">sentinel-1-rtc</dd>
+          <dt>AOI</dt><dd class="mono">132.93 km²</dd>
+          <dt>Threshold</dt><dd class="mono">−3.0 dB</dd>
+          <dt>Water mask</dt><dd class="mono">ESA WorldCover</dd>
+          <dt>Source</dt><dd><a href="https://planetarycomputer.microsoft.com" target="_blank" rel="noopener">Planetary Computer</a></dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Flood extent</h2>
+      <span class="section-sub">Derived output from this project's own <code>fflood-nep detect</code> run</span>
+    </div>
+    <div id="extentStatus" class="extent-pending">
+      <span>⏳</span>
+      <span>Checking for a published flood-extent layer…</span>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>River gauges</h2>
+      <span class="section-sub">DHM hydrological network · fetched live on every page load</span>
+    </div>
+    <div id="gaugeGrid" class="gauge-grid">
+      <div class="gauge-loading">Loading gauge readings…</div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="safety">
+      <strong style="color:var(--text-dim);">Safety note.</strong> Outputs are for situational mapping and research
+      until independently validated. SAR shadow, layover, steep terrain and vegetation can create false positives;
+      OpenStreetMap exposure counts reflect volunteer mapping activity. Do not use this as the sole basis for
+      evacuation or rescue decisions.
+    </div>
+    <div class="sources">
+      <div>Sentinel‑1 via <a href="https://planetarycomputer.microsoft.com" target="_blank" rel="noopener">Planetary Computer</a> · Exposure via <a href="https://data.humdata.org/dataset/hot_flood_npl" target="_blank" rel="noopener">HOT/HDX</a></div>
+      <div>Gauges via <a href="https://github.com/nirajbhusal/rasuwa-flood-bulletin" target="_blank" rel="noopener">community DHM mirror</a> · Basemap via <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a></div>
+      <div style="margin-top:6px;"><a href="https://github.com/DBishal13/fflood-nep" target="_blank" rel="noopener">github.com/DBishal13/fflood-nep →</a></div>
+    </div>
+  </footer>
+
+</div>
+
+<script src="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/pmtiles@3/dist/pmtiles.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
