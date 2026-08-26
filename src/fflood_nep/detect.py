@@ -11,6 +11,13 @@ ASSUMPTIONS = [
     "OpenStreetMap coverage in the exposure layers reflects volunteer mapping activity and changes between "
     "the HOT dataset's daily rebuilds; treat exposure counts as approximate, not authoritative.",
     gauge.GAUGE_CAVEAT,
+    "Flood inundation near Rasuwa has independently been confirmed by optical satellite imagery "
+    "(India's NRSC/ISRO, Resourcesat-2A AWiFS, 26 Aug 2026) -- this project's own SAR-based extent is "
+    "complementary, not the first evidence of the flood. The triggering mechanism is still actively "
+    "disputed as of 26 Aug 2026: competing hypotheses include an ice/snow-rock avalanche blocking the "
+    "Lhende River (possibly triggered by a M4.4 earthquake at 08:37 local time, ~47km north of "
+    "Gosainkunda) and a glacial lake outburst from the Puripu Glacier -- treat either as preliminary "
+    "until a detailed assessment is published.",
     "Do not use this output as the sole basis for evacuation or rescue decisions.",
 ]
 
