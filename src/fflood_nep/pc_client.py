@@ -40,6 +40,30 @@ def find_best_item(config: EventConfig, start: str, end: str):
     return planetary_computer.sign(best)
 
 
+def preview_url(item, bbox: tuple, max_size: int = 1024) -> str | None:
+    """A rendered preview PNG cropped to the AOI bbox, not the whole scene footprint.
+
+    item.assets["rendered_preview"].href points at the PC /data API's whole-scene preview
+    endpoint (/item/preview.png), which renders the entire Sentinel-1 swath -- mostly
+    irrelevant terrain far outside a 132 km^2 flood corridor. Reuses that URL's own render
+    params (expression/rescale/assets, chosen by PC for this collection) but swaps the
+    endpoint for /item/bbox/{bbox}.png, which crops server-side to just the AOI.
+    """
+    from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+
+    asset = item.assets.get("rendered_preview")
+    if asset is None:
+        return None
+    parts = urlsplit(asset.href)
+    # parse_qsl + urlencode(pairs) round-trips repeated keys (assets=vv&assets=vh, three
+    # rescale=... entries) correctly; dict(parse_qsl(...)) would silently drop all but the
+    # last occurrence of each repeated key.
+    query = [(k, v) for k, v in parse_qsl(parts.query) if k != "tile_format"]
+    query.append(("max_size", str(max_size)))
+    new_path = "/api/data/v1/item/bbox/{},{},{},{}.png".format(*bbox)
+    return urlunsplit((parts.scheme, parts.netloc, new_path, urlencode(query), ""))
+
+
 def target_grid(bbox: tuple, bbox_crs: str = "EPSG:4326", dst_crs: str = EXPOSURE_CRS, resolution: float = 10.0):
     """A single pixel grid (transform, width, height) that every AOI read is resampled onto, so pre/post/worldcover arrays align exactly."""
     import rasterio

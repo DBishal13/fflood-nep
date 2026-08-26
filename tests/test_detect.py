@@ -20,7 +20,7 @@ class FakeItem:
     def __init__(self, item_id: str):
         self.id = item_id
         self.assets = {
-            "rendered_preview": FakeAsset(f"https://example.test/preview/{item_id}.png"),
+            "rendered_preview": FakeAsset(f"https://example.test/preview.png?item={item_id}&expression=x"),
             "tilejson": FakeAsset(f"https://example.test/tilejson/{item_id}.json"),
         }
 
@@ -106,8 +106,9 @@ def test_run_detection_writes_outputs_when_both_scenes_are_present(tmp_path, mon
 
     assert report["status"] == "complete"
     assert report["flood_polygons"] >= 1
-    assert report["preview"]["pre_event"]["png"] == "https://example.test/preview/pre-1.png"
-    assert report["preview"]["post_event"]["png"] == "https://example.test/preview/post-1.png"
+    assert report["preview"]["pre_event"]["png"].startswith("https://example.test/api/data/v1/item/bbox/")
+    assert "item=pre-1" in report["preview"]["pre_event"]["png"]
+    assert "item=post-1" in report["preview"]["post_event"]["png"]
     assert report["river_gauges"]["stations"][0]["name"] == "Test Station"
     assert (output_dir / "flood_mask.tif").exists()
     assert (output_dir / "flood_extent.gpkg").exists()

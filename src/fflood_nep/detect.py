@@ -47,14 +47,16 @@ def _gauge_section(fetch_gauge) -> dict | None:
     }
 
 
-def _item_preview(item, label: str) -> dict | None:
+def _item_preview(item, label: str, bbox: tuple) -> dict | None:
     if item is None:
         return None
     preview = {}
-    for asset_key, out_key in (("rendered_preview", "png"), ("tilejson", "tilejson")):
-        asset = item.assets.get(asset_key)
-        if asset is not None:
-            preview[out_key] = asset.href
+    cropped = pc_client.preview_url(item, bbox)
+    if cropped is not None:
+        preview["png"] = cropped
+    tilejson_asset = item.assets.get("tilejson")
+    if tilejson_asset is not None:
+        preview["tilejson"] = tilejson_asset.href
     if not preview:
         return None
     preview["item"] = item.id
@@ -62,14 +64,14 @@ def _item_preview(item, label: str) -> dict | None:
     return preview
 
 
-def _preview_section(pre_item, post_item) -> dict | None:
-    pre_preview = _item_preview(pre_item, "pre_event")
-    post_preview = _item_preview(post_item, "post_event")
+def _preview_section(pre_item, post_item, bbox: tuple) -> dict | None:
+    pre_preview = _item_preview(pre_item, "pre_event", bbox)
+    post_preview = _item_preview(post_item, "post_event", bbox)
     if pre_preview is None and post_preview is None:
         return None
     return {
-        "note": "Browser-viewable PNG/tile links for the raw SAR scenes, hosted by Planetary Computer's "
-        "/data API -- not the flood-extent output itself.",
+        "note": "Browser-viewable PNG/tile links for the SAR scenes, cropped to the AOI bbox (not the whole "
+        "scene footprint) by Planetary Computer's /data API -- not the flood-extent output itself.",
         "pre_event": pre_preview,
         "post_event": post_preview,
     }
@@ -99,7 +101,7 @@ def run_detection(
         report = {
             "schema": "fflood-nep/detection-report/v1",
             "status": f"waiting_for_{missing}_event_scene",
-            "preview": _preview_section(pre_item, post_item),
+            "preview": _preview_section(pre_item, post_item, config.bbox),
             "river_gauges": river_gauges,
             "assumptions": ASSUMPTIONS,
         }
@@ -148,7 +150,7 @@ def run_detection(
         "threshold_db": threshold_db,
         "flood_polygons": int(len(flood_extent)),
         "flood_area_m2": float(flood_extent["area_m2"].sum()) if len(flood_extent) else 0.0,
-        "preview": _preview_section(pre_item, post_item),
+        "preview": _preview_section(pre_item, post_item, config.bbox),
         "river_gauges": river_gauges,
         "assumptions": ASSUMPTIONS,
     }

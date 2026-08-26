@@ -315,15 +315,15 @@ async function loadSar() {
       searchBestItem(POST_WINDOW[0], POST_WINDOW[1]),
     ]);
 
-    if (preItem) showScene(preItem, "pre_event");
+    if (preItem) showScene(preItem, "pre_event", AOI_BBOX);
 
     if (postItem) {
       document.getElementById("postBtn").disabled = false;
       document.getElementById("postBtn").addEventListener("click", () => {
-        setActiveToggle("postBtn"); showScene(postItem, "post_event");
+        setActiveToggle("postBtn"); showScene(postItem, "post_event", AOI_BBOX);
       });
       document.getElementById("preBtn").addEventListener("click", () => {
-        setActiveToggle("preBtn"); showScene(preItem, "pre_event");
+        setActiveToggle("preBtn"); showScene(preItem, "pre_event", AOI_BBOX);
       });
       headline.textContent = "Post-event scene available";
       headline.style.color = "var(--accent)";
@@ -349,17 +349,69 @@ function setActiveToggle(id) {
   ["preBtn", "postBtn"].forEach((b) => document.getElementById(b).classList.toggle("active", b === id));
 }
 
-function showScene(item, label) {
+// Mirrors pc_client.preview_url: the item's rendered_preview asset points at PC's whole-scene
+// /item/preview.png endpoint (mostly irrelevant terrain outside the AOI) -- swap it for the
+// /item/bbox/{bbox}.png endpoint, which crops server-side, reusing the same render params.
+function previewUrl(item, bbox, maxSize) {
+  const preview = item.assets && item.assets.rendered_preview;
+  if (!preview) return null;
+  const u = new URL(preview.href);
+  u.searchParams.delete("tile_format");
+  u.searchParams.set("max_size", String(maxSize || 1024));
+  u.pathname = "/api/data/v1/item/bbox/" + bbox.join(",") + ".png";
+  return u.toString();
+}
+
+let aoiGeojsonPromise = null;
+function loadAoiGeojsonOnce() {
+  if (!aoiGeojsonPromise) aoiGeojsonPromise = fetch(HOT_AOI_URL).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  return aoiGeojsonPromise;
+}
+
+// Draws the real AOI boundary as an SVG overlay on top of the (bbox-cropped) preview image,
+// so the corridor's actual shape is visible instead of an unlabeled square of terrain.
+async function drawAoiOverlay(svg, img, bbox) {
+  const geojson = await loadAoiGeojsonOnce();
+  if (!geojson || !geojson.features || !geojson.features.length) return;
+  const [minx, miny, maxx, maxy] = bbox;
+  const w = img.naturalWidth, h = img.naturalHeight;
+  if (!w || !h) return;
+  svg.setAttribute("viewBox", "0 0 " + w + " " + h);
+
+  const toPoint = ([lon, lat]) => [((lon - minx) / (maxx - minx)) * w, ((maxy - lat) / (maxy - miny)) * h].join(",");
+
+  const rings = [];
+  geojson.features.forEach((f) => {
+    const geom = f.geometry;
+    if (!geom) return;
+    const polys = geom.type === "Polygon" ? [geom.coordinates] : geom.type === "MultiPolygon" ? geom.coordinates : [];
+    polys.forEach((poly) => poly.forEach((ring) => rings.push(ring)));
+  });
+
+  svg.innerHTML = rings
+    .map((ring) => '<polygon points="' + ring.map(toPoint).join(" ") + '" class="aoi-overlay-shape"></polygon>')
+    .join("");
+}
+
+function showScene(item, label, bbox) {
   const radarFrame = document.getElementById("radarFrame");
   const caption = document.getElementById("radarCaption");
-  const preview = item.assets && item.assets.rendered_preview;
-  if (preview) {
-    radarFrame.innerHTML = '<img src="' + preview.href + '" alt="Sentinel-1 RTC composite">';
+  const url = previewUrl(item, bbox, 1024);
+  if (url) {
+    radarFrame.innerHTML =
+      '<img id="radarImg" src="' + url + '" alt="Sentinel-1 RTC composite, cropped to the flood corridor">' +
+      '<svg id="radarOverlay" class="radar-overlay" preserveAspectRatio="none"></svg>';
+    const img = document.getElementById("radarImg");
+    const svg = document.getElementById("radarOverlay");
+    if (img.complete) drawAoiOverlay(svg, img, bbox);
+    else img.addEventListener("load", () => drawAoiOverlay(svg, img, bbox));
   } else {
     radarFrame.innerHTML = '<span class="radar-loading">No preview asset on this item.</span>';
   }
   const dt = item.properties && item.properties.datetime;
-  caption.innerHTML = "Sentinel‑1 RTC composite (" + label.replace("_", "-") + ") · <span class=\"mono\">" + item.id + (dt ? " · " + dt : "") + "</span>";
+  caption.innerHTML =
+    "Sentinel‑1 RTC composite (" + label.replace("_", "-") + "), cropped to the flood corridor — outline shows the exact HOT AOI boundary · " +
+    '<span class="mono">' + item.id + (dt ? " · " + dt : "") + "</span>";
 }
 
 // ==================== FLOOD EXTENT ====================
