@@ -1,3 +1,5 @@
+import os
+
 from .config import EventConfig
 from .exposure import EXPOSURE_CRS
 from .stac import search_query
@@ -5,12 +7,27 @@ from .stac import search_query
 WORLDCOVER_COLLECTION = "esa-worldcover"
 WORLDCOVER_ASSET = "map"
 
+# GDAL's VSICURL layer (used by rasterio for the actual COG reads in _read_signed_asset below)
+# does not retry on transient HTTP errors -- including 429s from Planetary Computer's rate
+# limiting -- unless told to. This is Microsoft's own documented fix for that failure mode:
+# https://planetarycomputer.microsoft.com/docs/quickstarts/reading-stac-data/
+os.environ.setdefault("GDAL_HTTP_MAX_RETRY", "5")
+os.environ.setdefault("GDAL_HTTP_RETRY_DELAY", "1")
+
 
 def _client():
     from pystac_client import Client
+    from pystac_client.stac_api_io import StacApiIO
+    from urllib3.util.retry import Retry
 
+    # pystac-client's own default (max_retries=5, an int) only retries on connection-level
+    # failures -- HTTPAdapter(max_retries=<int>) leaves status_forcelist empty, so a 429 response
+    # is returned as-is, not retried. An explicit Retry with status_forcelist is what actually
+    # protects find_best_item/read_worldcover's searches against Planetary Computer rate limiting.
+    retry = Retry(total=5, backoff_factor=1.0, status_forcelist=[429, 500, 502, 503, 504])
     return Client.open(
         "https://planetarycomputer.microsoft.com/api/stac/v1",
+        stac_io=StacApiIO(max_retries=retry),
     )
 
 

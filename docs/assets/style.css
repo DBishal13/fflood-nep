@@ -303,7 +303,7 @@ section { padding-top: 48px; }
 
 /* ---------- SAR preview ---------- */
 
-.sar-shell { display: grid; grid-template-columns: 1.35fr 1fr; gap: 20px; }
+.sar-shell { display: grid; grid-template-columns: 1.7fr 1fr; gap: 20px; }
 @media (max-width: 860px) { .sar-shell { grid-template-columns: 1fr; } }
 
 .radar-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; box-shadow: var(--shadow); }
@@ -313,11 +313,10 @@ section { padding-top: 48px; }
 .seg button.active { background: var(--accent); color: var(--bg); cursor: default; }
 .seg button:disabled { color: var(--text-faint); cursor: not-allowed; }
 
-.radar-frame { position: relative; line-height: 0; background: #0a0805; min-height: 260px; display: flex; align-items: center; justify-content: center; }
-.radar-frame img { display: block; width: 100%; height: auto; }
-.radar-frame .radar-loading { color: var(--text-faint); font-size: .82rem; padding: 40px; }
-.radar-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.aoi-overlay-shape { fill: var(--select); fill-opacity: 0.1; stroke: var(--select); stroke-width: 3; vector-effect: non-scaling-stroke; }
+.radar-frame { position: relative; background: #0a0805; min-height: 520px; }
+.sar-map { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sar-map .maplibregl-ctrl-attrib { font-size: .65rem; }
+.radar-frame .radar-loading { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--text-faint); font-size: .82rem; padding: 40px; background: #0a0805; }
 .radar-caption { padding: 14px 16px 16px; font-size: .8rem; color: var(--text-dim); }
 .radar-caption .mono { color: var(--text-faint); font-size: .74rem; }
 

@@ -38,16 +38,38 @@ function updateLiveStatus() {
   else liveStatusEl.textContent = failed + " of 3 live sources unavailable";
 }
 
-// ==================== MAP ====================
+// ==================== THEME ====================
 
-let protocol = new pmtiles.Protocol();
-maplibregl.addProtocol("pmtiles", protocol.tile);
+const THEME_KEY = "fflood-theme";
 
 const isDarkTheme = () =>
   document.documentElement.getAttribute("data-theme") === "dark" ||
   (document.documentElement.getAttribute("data-theme") !== "light" &&
     window.matchMedia("(prefers-color-scheme: dark)").matches);
 const basemapStyle = () => "https://tiles.openfreemap.org/styles/" + (isDarkTheme() ? "dark" : "liberty");
+
+function setThemeToggleActive() {
+  const dark = isDarkTheme();
+  document.getElementById("lightBtn").classList.toggle("active", !dark);
+  document.getElementById("darkBtn").classList.toggle("active", dark);
+}
+
+function setTheme(pref) {
+  document.documentElement.setAttribute("data-theme", pref);
+  try { localStorage.setItem(THEME_KEY, pref); } catch (e) {}
+  setThemeToggleActive();
+  restyleMap();
+  if (sarMap.getLayer("sar-aoi-line")) sarMap.setPaintProperty("sar-aoi-line", "line-color", cssVar("--select"));
+}
+
+document.getElementById("lightBtn").addEventListener("click", () => setTheme("light"));
+document.getElementById("darkBtn").addEventListener("click", () => setTheme("dark"));
+setThemeToggleActive();
+
+// ==================== MAP ====================
+
+let protocol = new pmtiles.Protocol();
+maplibregl.addProtocol("pmtiles", protocol.tile);
 
 const map = new maplibregl.Map({
   container: "map",
@@ -103,40 +125,80 @@ function addCategoryLayers(map, catKey) {
   return [fillId, lineId, circleId];
 }
 
-map.on("load", () => {
-  map.addSource("hot", { type: "vector", url: "pmtiles://" + HOT_PMTILES_URL });
+let lastAoiGeojson = null;
+let lastSelectedFeature = null;
+let lastFloodExtentGeojson = null;
 
-  map.addSource("aoi", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+function buildLegend() {
+  const legendList = document.getElementById("legendList");
+  CATEGORIES.forEach((cat) => {
+    const ids = ["fill-" + cat.key, "line-" + cat.key, "circle-" + cat.key];
+    const item = document.createElement("label");
+    item.className = "legend-item";
+    item.innerHTML =
+      '<input type="checkbox" checked>' +
+      '<span class="legend-swatch" style="background:var(--cat-' + cat.key + ');"></span>' +
+      "<span>" + cat.label + "</span>" +
+      '<span class="legend-count"></span>';
+    const checkbox = item.querySelector("input");
+    checkbox.addEventListener("change", () => {
+      const vis = checkbox.checked ? "visible" : "none";
+      ids.forEach((id) => { if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", vis); });
+      item.classList.toggle("off", !checkbox.checked);
+    });
+    legendList.appendChild(item);
+  });
+}
+buildLegend();
+
+function applyLegendVisibility() {
+  document.querySelectorAll("#legendList .legend-item").forEach((item, i) => {
+    if (item.querySelector("input").checked) return;
+    const cat = CATEGORIES[i];
+    ["fill-" + cat.key, "line-" + cat.key, "circle-" + cat.key].forEach((id) => {
+      if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", "none");
+    });
+  });
+}
+
+// (Re-)adds every data-driven source/layer, restoring selection/AOI/flood-extent state. Called on
+// initial load AND after every restyleMap() theme switch, since map.setStyle() wipes all custom
+// sources/layers (the camera position survives setStyle() on its own).
+function setupMapLayers() {
+  interactiveLayerIds.length = 0;
+
+  map.addSource("hot", { type: "vector", url: "pmtiles://" + HOT_PMTILES_URL });
+  map.addSource("aoi", { type: "geojson", data: lastAoiGeojson || { type: "FeatureCollection", features: [] } });
   map.addLayer({ id: "aoi-fill", type: "fill", source: "aoi", paint: { "fill-color": cssVar("--text-dim"), "fill-opacity": 0.04 } });
   map.addLayer({
     id: "aoi-line", type: "line", source: "aoi",
     paint: { "line-color": cssVar("--text-dim"), "line-width": 1.5, "line-dasharray": [3, 2] },
   });
 
-  const legendList = document.getElementById("legendList");
-  CATEGORIES.forEach((cat) => {
-    const ids = addCategoryLayers(map, cat.key);
-    const item = document.createElement("label");
-    item.className = "legend-item";
-    item.innerHTML =
-      '<input type="checkbox" checked>' +
-      '<span class="legend-swatch" style="background:' + catColor(cat.key) + ';"></span>' +
-      "<span>" + cat.label + "</span>" +
-      '<span class="legend-count"></span>';
-    const checkbox = item.querySelector("input");
-    checkbox.addEventListener("change", () => {
-      const vis = checkbox.checked ? "visible" : "none";
-      ids.forEach((id) => map.setLayoutProperty(id, "visibility", vis));
-      item.classList.toggle("off", !checkbox.checked);
-    });
-    legendList.appendChild(item);
-  });
+  CATEGORIES.forEach((cat) => addCategoryLayers(map, cat.key));
+  applyLegendVisibility();
 
-  fetch(HOT_AOI_URL)
-    .then((r) => { if (!r.ok) throw new Error("aoi fetch failed"); return r.json(); })
+  ensureHighlightLayer();
+  if (lastSelectedFeature) map.getSource("selected").setData({ type: "FeatureCollection", features: [lastSelectedFeature] });
+
+  if (lastFloodExtentGeojson) addFloodExtentLayer(lastFloodExtentGeojson);
+}
+
+function restyleMap() {
+  // "style.load" doesn't re-fire on setStyle() in this MapLibre build -- "idle" reliably does,
+  // once the new base style has finished loading.
+  map.setStyle(basemapStyle());
+  map.once("idle", setupMapLayers);
+}
+
+map.on("load", () => {
+  setupMapLayers();
+
+  loadAoiGeojsonOnce()
     .then((geojson) => {
+      if (!geojson) throw new Error("aoi fetch failed");
+      lastAoiGeojson = geojson;
       map.getSource("aoi").setData(geojson);
-      const b = geojson.features[0]?.bbox;
       statusParts.map = "ok";
       updateLiveStatus();
     })
@@ -144,8 +206,10 @@ map.on("load", () => {
 
   map.fitBounds(AOI_BBOX, { padding: 30, duration: 0 });
 
-  map.on("mousemove", interactiveLayerIds, () => { map.getCanvas().style.cursor = "pointer"; });
-  map.on("mouseleave", interactiveLayerIds, () => { map.getCanvas().style.cursor = ""; });
+  map.on("mousemove", (e) => {
+    const feats = map.queryRenderedFeatures(e.point, { layers: interactiveLayerIds });
+    map.getCanvas().style.cursor = feats.length ? "pointer" : "";
+  });
 
   map.on("click", (e) => {
     const features = map.queryRenderedFeatures(e.point, { layers: interactiveLayerIds });
@@ -175,6 +239,7 @@ function ensureHighlightLayer() {
 }
 
 function selectFeature(feature) {
+  lastSelectedFeature = feature;
   ensureHighlightLayer();
   map.getSource("selected").setData({ type: "FeatureCollection", features: [feature] });
 
@@ -194,6 +259,7 @@ function selectFeature(feature) {
 }
 
 function clearSelection() {
+  lastSelectedFeature = null;
   if (map.getSource("selected")) map.getSource("selected").setData({ type: "FeatureCollection", features: [] });
   document.getElementById("inspector").innerHTML = '<p class="inspector-empty">Click a building, road, waterway, or facility on the map to see its details here.</p>';
 }
@@ -279,6 +345,20 @@ function stacFilter() {
   };
 }
 
+// Retries on 429 (Planetary Computer rate limiting) and 5xx, honoring Retry-After when the
+// server sends one, otherwise exponential backoff. A single transient failure shouldn't turn
+// into a user-facing "SAR status unavailable".
+async function fetchWithRetry(url, options, retries) {
+  const statusForcelist = [429, 500, 502, 503, 504];
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(url, options);
+    if (res.ok || !statusForcelist.includes(res.status) || attempt >= retries) return res;
+    const retryAfter = Number(res.headers.get("Retry-After"));
+    const delayMs = retryAfter > 0 ? retryAfter * 1000 : 500 * Math.pow(2, attempt);
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+  }
+}
+
 async function searchBestItem(start, end) {
   const body = {
     collections: ["sentinel-1-rtc"],
@@ -288,11 +368,11 @@ async function searchBestItem(start, end) {
     "filter-lang": "cql2-json",
     filter: stacFilter(),
   };
-  const res = await fetch(PC_STAC_SEARCH_URL, {
+  const res = await fetchWithRetry(PC_STAC_SEARCH_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
-  });
+  }, 4);
   if (!res.ok) throw new Error("STAC search failed: " + res.status);
   const data = await res.json();
   const items = data.features || [];
@@ -304,7 +384,6 @@ async function searchBestItem(start, end) {
 let preItem = null, postItem = null;
 
 async function loadSar() {
-  const radarFrame = document.getElementById("radarFrame");
   const caption = document.getElementById("radarCaption");
   const headline = document.getElementById("detectionHeadline");
   const body = document.getElementById("detectionBody");
@@ -337,7 +416,9 @@ async function loadSar() {
     }
     statusParts.sar = "ok";
   } catch (err) {
-    radarFrame.innerHTML = '<span class="radar-loading">Could not reach Planetary Computer right now.</span>';
+    const loading = document.getElementById("radarLoading");
+    loading.textContent = "Could not reach Planetary Computer right now.";
+    loading.style.display = "flex";
     headline.textContent = "SAR status unavailable";
     body.textContent = "Live search against Planetary Computer failed — try refreshing.";
     statusParts.sar = "error";
@@ -368,49 +449,68 @@ function loadAoiGeojsonOnce() {
   return aoiGeojsonPromise;
 }
 
-// Draws the real AOI boundary as an SVG overlay on top of the (bbox-cropped) preview image,
-// so the corridor's actual shape is visible instead of an unlabeled square of terrain.
-async function drawAoiOverlay(svg, img, bbox) {
-  const geojson = await loadAoiGeojsonOnce();
-  if (!geojson || !geojson.features || !geojson.features.length) return;
-  const [minx, miny, maxx, maxy] = bbox;
-  const w = img.naturalWidth, h = img.naturalHeight;
-  if (!w || !h) return;
-  svg.setAttribute("viewBox", "0 0 " + w + " " + h);
+// The SAR panel is a real (small) MapLibre map, not a static <img> -- the pre/post-event composite
+// is loaded as a georeferenced `image` source pinned to its exact bbox corners, so scroll-zoom,
+// drag-pan and pinch all work natively, and the AOI outline is a real vector layer instead of
+// hand-projected SVG points.
+const sarMap = new maplibregl.Map({
+  container: "sarMap",
+  style: { version: 8, sources: {}, layers: [{ id: "bg", type: "background", paint: { "background-color": "#0a0805" } }] },
+  center: [(AOI_BBOX[0] + AOI_BBOX[2]) / 2, (AOI_BBOX[1] + AOI_BBOX[3]) / 2],
+  zoom: 9,
+  attributionControl: false,
+});
+sarMap.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+window.sarMap = sarMap;
 
-  const toPoint = ([lon, lat]) => [((lon - minx) / (maxx - minx)) * w, ((maxy - lat) / (maxy - miny)) * h].join(",");
+let sarImageBounds = null;
+let sarMapFitted = false;
 
-  const rings = [];
-  geojson.features.forEach((f) => {
-    const geom = f.geometry;
-    if (!geom) return;
-    const polys = geom.type === "Polygon" ? [geom.coordinates] : geom.type === "MultiPolygon" ? geom.coordinates : [];
-    polys.forEach((poly) => poly.forEach((ring) => rings.push(ring)));
-  });
-
-  svg.innerHTML = rings
-    .map((ring) => '<polygon points="' + ring.map(toPoint).join(" ") + '" class="aoi-overlay-shape"></polygon>')
-    .join("");
-}
+document.getElementById("sarReset").addEventListener("click", () => {
+  sarMap.fitBounds(sarImageBounds || AOI_BBOX, { padding: 24, duration: 400 });
+});
 
 function showScene(item, label, bbox) {
-  const radarFrame = document.getElementById("radarFrame");
   const caption = document.getElementById("radarCaption");
+  const loading = document.getElementById("radarLoading");
   const url = previewUrl(item, bbox, 1024);
-  if (url) {
-    radarFrame.innerHTML =
-      '<img id="radarImg" src="' + url + '" alt="Sentinel-1 RTC composite, cropped to the flood corridor">' +
-      '<svg id="radarOverlay" class="radar-overlay" preserveAspectRatio="none"></svg>';
-    const img = document.getElementById("radarImg");
-    const svg = document.getElementById("radarOverlay");
-    if (img.complete) drawAoiOverlay(svg, img, bbox);
-    else img.addEventListener("load", () => drawAoiOverlay(svg, img, bbox));
-  } else {
-    radarFrame.innerHTML = '<span class="radar-loading">No preview asset on this item.</span>';
+
+  if (!url) {
+    loading.textContent = "No preview asset on this item.";
+    loading.style.display = "flex";
+    return;
   }
+  loading.style.display = "none";
+
+  // image source coordinates: top-left, top-right, bottom-right, bottom-left, in [lon, lat]
+  const [minx, miny, maxx, maxy] = bbox;
+  const coords = [[minx, maxy], [maxx, maxy], [maxx, miny], [minx, miny]];
+
+  const applySource = () => {
+    if (sarMap.getSource("sar-image")) {
+      sarMap.getSource("sar-image").updateImage({ url, coordinates: coords });
+    } else {
+      sarMap.addSource("sar-image", { type: "image", url, coordinates: coords });
+      sarMap.addLayer({ id: "sar-image-layer", type: "raster", source: "sar-image" });
+      sarMap.addSource("sar-aoi", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      sarMap.addLayer({
+        id: "sar-aoi-line", type: "line", source: "sar-aoi",
+        paint: { "line-color": cssVar("--select"), "line-width": 2.5 },
+      });
+      loadAoiGeojsonOnce().then((geojson) => { if (geojson) sarMap.getSource("sar-aoi").setData(geojson); });
+    }
+    if (!sarMapFitted) {
+      sarMap.fitBounds(bbox, { padding: 24, duration: 0 });
+      sarMapFitted = true;
+    }
+  };
+  if (sarMap.isStyleLoaded()) applySource();
+  else sarMap.once("load", applySource);
+  sarImageBounds = bbox;
+
   const dt = item.properties && item.properties.datetime;
   caption.innerHTML =
-    "Sentinel‑1 RTC composite (" + label.replace("_", "-") + "), cropped to the flood corridor — outline shows the exact HOT AOI boundary · " +
+    "Sentinel‑1 RTC composite (" + label.replace("_", "-") + ") — scroll or drag to inspect; outline shows the exact HOT AOI boundary · " +
     '<span class="mono">' + item.id + (dt ? " · " + dt : "") + "</span>";
 }
 
@@ -420,6 +520,7 @@ function checkFloodExtent() {
   fetch("data/flood_extent.geojson")
     .then((r) => { if (!r.ok) throw new Error("not found"); return r.json(); })
     .then((geojson) => {
+      lastFloodExtentGeojson = geojson;
       document.getElementById("extentStatus").outerHTML =
         '<div class="extent-pending" style="border-style:solid; background:var(--accent-soft); border-color:var(--accent);">' +
         "<span>✓</span><span>Flood-extent layer published — " + geojson.features.length + " polygons. Rendered on the map above.</span></div>";
