@@ -1,0 +1,20 @@
+[event]
+name = "rasuwa-2026-08-26"
+description = "Bhote Koshi and Trishuli flash flood rapid mapping"
+event_date = "2026-08-26"
+
+[aoi]
+# Approximate corridor envelope; refine against official activation AOIs.
+bbox = [85.10, 27.85, 85.75, 28.45]
+
+[data]
+stac_url = "https://planetarycomputer.microsoft.com/api/stac/v1"
+collection = "sentinel-1-rtc"
+platform = "SENTINEL-1"
+polarizations = ["VV", "VH"]
+
+[windows]
+pre_start = "2026-08-01T00:00:00Z"
+pre_end = "2026-08-25T23:59:59Z"
+post_start = "2026-08-26T00:00:00Z"
+post_end = "2026-08-29T23:59:59Z"

@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fflood-nep"
+version = "0.1.0"
+description = "Reproducible geospatial workflows for the 2026 Nepal flash flood"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pystac-client",
+    "planetary-computer",
+    "rasterio",
+    "numpy",
+    "scipy",
+    "geopandas",
+    "requests",
+    "pyproj",
+]
+
+[project.scripts]
+fflood-nep = "fflood_nep.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
