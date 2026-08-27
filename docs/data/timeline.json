@@ -179,6 +179,23 @@
         }
       ],
       "logged_at": "2026-08-27T04:30:39Z"
+    },
+    {
+      "date": "2026-08-26T00:00:00Z",
+      "category": "recovery",
+      "headline": "Ministry of Energy: ~748MW of hydropower capacity affected, broader than earlier grid-loss figure",
+      "body": "Nepal's Ministry of Energy's preliminary assessment covers 14 hydropower projects across Rasuwa and Nuwakot -- 9 operational (~354-390MW combined) plus 5 under construction (~342-394MW combined), totaling roughly 748-754MW (sources vary slightly on the exact split). This is a broader figure than the ~430MW/431.1MW previously logged, which represented only the generation capacity that actually dropped off the grid -- the new figure additionally counts under-construction projects not yet feeding power. Named Rasuwa projects: Upper Trishuli-1 (216MW), Rasuwagadhi (111MW), Rasuwa Bhotekoshi (120MW), Sanjen Khola (78MW), Chilime (22MW), plus several smaller ones. Named Nuwakot projects: Trishuli (24MW), Devighat (14.1MW), Upper Trishuli-3A (60MW), Upper Trishuli-3B (37MW), Middle Trishuli Ganga (15.6MW), plus a 25MW solar project. The Ministry describes this as a preliminary assessment with no financial damage estimate yet.",
+      "sources": [
+        {
+          "label": "International Water Power Magazine",
+          "url": "https://www.waterpowermagazine.com/news/nepal-floods-affect-hydropower-projects-in-rasuwa-and-nuwakot/"
+        },
+        {
+          "label": "Spotlight Nepal",
+          "url": "https://www.spotlightnepal.com/2026/08/26/700-mw-hydropower-solar-projects-damaged-bhotekoshi-floods/"
+        }
+      ],
+      "logged_at": "2026-08-27T16:55:52Z"
     }
   ]
 }
