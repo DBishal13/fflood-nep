@@ -43,6 +43,13 @@ def main() -> None:
         help="repeatable; format 'Label|https://...'",
     )
 
+    insar_parser = subparsers.add_parser(
+        "insar", help="check for a post-event SLC pass and submit/track a HyP3 coherence job (needs ~/.netrc)"
+    )
+    insar_parser.add_argument("--bbox", nargs=4, type=float, metavar=("MINX", "MINY", "MAXX", "MAXY"), required=True)
+    insar_parser.add_argument("--event-start", required=True, help="ISO 8601 UTC, e.g. 2026-08-26T00:00:00Z")
+    insar_parser.add_argument("--output", type=Path, default=Path("docs/data/insar_status.json"))
+
     args = parser.parse_args()
 
     if args.command == "plan":
@@ -100,6 +107,18 @@ def main() -> None:
             sources=sources,
         )
         print(f"Added timeline entry ({entry['category']}, {entry['date']}): {entry['headline']}")
+    elif args.command == "insar":
+        from . import insar
+
+        state = insar.check_and_advance(args.output, tuple(args.bbox), args.event_start)
+        if state["job"]:
+            print(f"Job {state['job']['job_id']}: {state['job']['status']}")
+        elif state["post_event_scene"]:
+            print(f"Post-event scene found ({state['post_event_scene']['sceneId']}) but job not yet submitted")
+        elif state["pre_event_scene"]:
+            print(f"Pinned pre-event scene {state['pre_event_scene']['sceneId']}; no post-event pass yet")
+        else:
+            print("No SLC scenes found for this AOI/date range")
 
 
 if __name__ == "__main__":

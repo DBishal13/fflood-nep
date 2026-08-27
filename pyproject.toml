@@ -17,6 +17,7 @@ dependencies = [
     "geopandas",
     "requests",
     "pyproj",
+    "hyp3_sdk",
 ]
 
 [project.scripts]

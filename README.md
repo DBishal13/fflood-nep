@@ -35,6 +35,28 @@ If no post-event Sentinel-1 scene exists yet for the corridor (likely for the fi
 
 It also embeds a snapshot of the Copernicus EMS Rapid Mapping activation for this event (EMSR927, `--no-ems` to skip) — a real, independent EU-authorised activation, not something this project runs itself. Its own products may not be delivered yet; check each row's `status`/`expected_delivery`. Refresh just this snapshot with `fflood-nep ems --output docs/data/ems_activation.json` (its API isn't CORS-open, so the web UI reads that committed file rather than fetching it live).
 
+### InSAR coherence (separate from `detect`)
+
+`detect`'s SAR pipeline uses amplitude/backscatter (RTC/GRD) to map flood *extent*. It cannot say anything about *deformation* at the avalanche/landslide source, because RTC/GRD products discard phase. `fflood-nep insar` is a separate pipeline for that:
+
+```bash
+fflood-nep insar --bbox 85.02 27.81 85.42 28.32 --event-start 2026-08-26T00:00:00Z --output docs/data/insar_status.json
+```
+
+It's an idempotent state machine, safe to re-run: it pins the most recent pre-event Sentinel-1 **SLC** scene (phase-preserving, unlike RTC/GRD — sourced from ASF's public catalog, no auth needed for search), watches for the next SLC pass on the *same relative orbit/track* (InSAR needs a same-track pair to co-register), and once one appears, submits a coherence job to [ASF's HyP3 on-demand processing service](https://hyp3-docs.asf.alaska.edu/) and tracks it to completion.
+
+**Requires a free NASA Earthdata Login** in `~/.netrc`:
+
+```
+machine urs.earthdata.nasa.gov
+    login YOUR_USERNAME
+    password YOUR_PASSWORD
+```
+
+Then `chmod 600 ~/.netrc`. Register at https://urs.earthdata.nasa.gov/users/new, then sign in once at https://search.asf.alaska.edu/ to authorize the HyP3 application on your account. `hyp3_sdk` reads the file automatically — this project never handles the credentials itself.
+
+Expect coherence, not a clean displacement map: a mass-wasting event this violent will likely fully decorrelate the interferogram right at the rupture (the ground surface itself changed too much between passes for phase to stay coherent). That decorrelation is itself the useful signal here — a coherence-loss map delineates the disturbed source area, which plain amplitude backscatter can't.
+
 ## Web UI
 
 **Live at https://dbishal13.github.io/fflood-nep/** — an interactive map dashboard ("Corridor Watch") built from this project's data sources, served as a static site from `docs/` via GitHub Pages.
