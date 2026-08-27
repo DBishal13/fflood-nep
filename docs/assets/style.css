@@ -280,6 +280,21 @@ section { padding-top: 48px; }
 .chip-ok { background: var(--ok-soft); color: var(--ok); }
 .chip-warn { background: var(--warn-soft); color: var(--warn); }
 .chip-danger { background: var(--danger-soft); color: var(--danger); }
+.chip-accent { background: var(--accent-soft); color: var(--accent); }
+.chip-neutral { background: var(--surface-2); color: var(--text-dim); border: 1px solid var(--border); }
+
+/* ---------- event timeline ---------- */
+
+.timeline-list { display: flex; flex-direction: column; border-left: 2px solid var(--border); margin-left: 6px; }
+.timeline-item { position: relative; padding: 0 0 28px 26px; }
+.timeline-item:last-child { padding-bottom: 0; }
+.timeline-dot { position: absolute; left: -7px; top: 3px; width: 12px; height: 12px; border-radius: 50%; background: var(--surface); border: 2px solid var(--accent); }
+.timeline-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
+.timeline-date { font-size: .72rem; color: var(--text-faint); }
+.timeline-headline { font-weight: 700; font-size: .95rem; margin-bottom: 4px; }
+.timeline-body { font-size: .84rem; color: var(--text-dim); line-height: 1.55; margin: 0 0 8px; max-width: 68ch; }
+.timeline-sources a { font-size: .78rem; color: var(--accent); text-decoration: none; margin-right: 14px; }
+.timeline-sources a:hover { text-decoration: underline; }
 
 .washed-flag { margin-top: 8px; display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; background: var(--warn-soft); border: 1px dashed var(--warn); border-radius: 3px; font-size: .72rem; color: var(--text); line-height: 1.4; }
 

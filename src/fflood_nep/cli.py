@@ -4,6 +4,7 @@ from pathlib import Path
 
 from .config import EventConfig
 from .stac import acquisition_plan
+from .timeline import CATEGORIES as TIMELINE_CATEGORIES
 
 
 def main() -> None:
@@ -28,6 +29,19 @@ def main() -> None:
         "ems", help="fetch the Copernicus EMS Rapid Mapping activation snapshot for this event (EMSR927)"
     )
     ems_parser.add_argument("--output", type=Path, default=Path("docs/data/ems_activation.json"))
+
+    timeline_parser = subparsers.add_parser("timeline", help="manage the public event timeline")
+    timeline_sub = timeline_parser.add_subparsers(dest="timeline_command", required=True)
+    timeline_add_parser = timeline_sub.add_parser("add", help="append a new entry to the event timeline")
+    timeline_add_parser.add_argument("--output", type=Path, default=Path("docs/data/timeline.json"))
+    timeline_add_parser.add_argument("--date", required=True, help="ISO 8601 UTC, e.g. 2026-08-27T12:00:00Z")
+    timeline_add_parser.add_argument("--category", required=True, choices=sorted(TIMELINE_CATEGORIES))
+    timeline_add_parser.add_argument("--headline", required=True)
+    timeline_add_parser.add_argument("--body", required=True)
+    timeline_add_parser.add_argument(
+        "--source", action="append", required=True, metavar="LABEL|URL",
+        help="repeatable; format 'Label|https://...'",
+    )
 
     args = parser.parse_args()
 
@@ -67,6 +81,25 @@ def main() -> None:
             print(f"Wrote {args.output} ({payload['activation']['code']}, {len(payload['activation']['products'])} product rows)")
         else:
             print(f"Wrote {args.output} (no activation data available)")
+    elif args.command == "timeline" and args.timeline_command == "add":
+        from . import timeline
+
+        sources = []
+        for raw in args.source:
+            if "|" not in raw:
+                parser.error(f"--source must be 'Label|https://url', got {raw!r}")
+            label, url = raw.split("|", 1)
+            sources.append({"label": label.strip(), "url": url.strip()})
+
+        entry = timeline.add_entry(
+            args.output,
+            date=args.date,
+            category=args.category,
+            headline=args.headline,
+            body=args.body,
+            sources=sources,
+        )
+        print(f"Added timeline entry ({entry['category']}, {entry['date']}): {entry['headline']}")
 
 
 if __name__ == "__main__":

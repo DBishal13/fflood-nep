@@ -849,10 +849,62 @@ function loadConfirmations() {
     .then((snapshot) => grid.appendChild(emsCard(snapshot)));
 }
 
+// ==================== EVENT TIMELINE ====================
+// Reads docs/data/timeline.json -- entries drafted by hand (usually a scheduled research check-in,
+// see fflood_nep.timeline.add_entry) as new developments about the event surface, not a live feed.
+
+const TIMELINE_CHIP = {
+  casualty: ["chip-danger", "Casualty"],
+  cause: ["chip-warn", "Cause"],
+  imagery: ["chip-accent", "Imagery"],
+  activation: ["chip-accent", "Activation"],
+  recovery: ["chip-ok", "Recovery"],
+  gauge: ["chip-neutral", "Gauge"],
+  other: ["chip-neutral", "Update"],
+};
+
+function timelineItem(entry) {
+  const [chipClass, chipLabel] = TIMELINE_CHIP[entry.category] || TIMELINE_CHIP.other;
+  const sources = (entry.sources || [])
+    .map((s) => '<a href="' + s.url + '" target="_blank" rel="noopener">' + s.label + " →</a>")
+    .join("");
+  const div = document.createElement("div");
+  div.className = "timeline-item";
+  div.innerHTML =
+    '<span class="timeline-dot"></span>' +
+    '<div class="timeline-meta">' +
+      '<span class="mono timeline-date">' + fmtUtc(entry.date) + "</span>" +
+      '<span class="chip ' + chipClass + '">' + chipLabel + "</span>" +
+    "</div>" +
+    '<div class="timeline-headline">' + entry.headline + "</div>" +
+    '<p class="timeline-body">' + entry.body + "</p>" +
+    '<div class="timeline-sources">' + sources + "</div>";
+  return div;
+}
+
+function loadTimeline() {
+  const list = document.getElementById("timelineList");
+  fetch("data/timeline.json")
+    .then((r) => (r.ok ? r.json() : null))
+    .then((payload) => {
+      const entries = (payload && payload.entries) || [];
+      list.innerHTML = "";
+      if (!entries.length) {
+        list.innerHTML = '<p class="inspector-empty">No timeline entries yet.</p>';
+        return;
+      }
+      entries.forEach((entry) => list.appendChild(timelineItem(entry)));
+    })
+    .catch(() => {
+      list.innerHTML = '<p class="inspector-empty">Could not load the timeline right now — try refreshing.</p>';
+    });
+}
+
 // ==================== INIT ====================
 
 loadGauges();
 loadSar();
 loadConfirmations();
+loadTimeline();
 checkFloodExtent();
 showPlanetPhase("pre");

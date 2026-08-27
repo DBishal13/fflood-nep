@@ -1,0 +1,56 @@
+{
+  "entries": [
+    {
+      "date": "2026-08-26T20:00:00Z",
+      "category": "cause",
+      "headline": "Cause still disputed; casualty figures still provisional",
+      "body": "Planet's own catalog description reports at least 157 deaths in Nepal (Nepal Police) plus 3 deaths and 265 people missing in Gyirong County, Tibet Autonomous Region (Chinese state media) -- all figures explicitly provisional and rising at time of release. Preliminary expert assessment leans toward an ice/rock avalanche from an upper-catchment glacier as the trigger, though a M4.4 earthquake near Gosainkunda and a GLOF from the Puripu Glacier remain live hypotheses pending a detailed investigation.",
+      "sources": [
+        {
+          "label": "Source Cooperative catalog",
+          "url": "https://source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26"
+        }
+      ],
+      "logged_at": "2026-08-27T04:30:39Z"
+    },
+    {
+      "date": "2026-08-26T18:00:00Z",
+      "category": "imagery",
+      "headline": "Planet publishes an open PlanetScope catalog for the event",
+      "body": "Planet's Crisis Response Program released a dedicated STAC catalog on Source Cooperative: 5 pre-event scenes (27 May 2026, pre-monsoon baseline) and 9 post-event scenes (26 Aug 2026) at 3.8m resolution, CC-BY-NC-4.0. Post-event coverage is 62-93% cloud-obscured -- a concrete illustration of why this project's actual flood-extent detection relies on radar, not optical imagery.",
+      "sources": [
+        {
+          "label": "Source Cooperative catalog",
+          "url": "https://source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26"
+        }
+      ],
+      "logged_at": "2026-08-27T04:30:39Z"
+    },
+    {
+      "date": "2026-08-26T12:00:00Z",
+      "category": "imagery",
+      "headline": "NRSC/ISRO publishes optical confirmation of inundation",
+      "body": "India's National Remote Sensing Centre published a pre/post comparison (Sentinel-2, 24 Aug vs. Resourcesat-2A AWiFS, 26 Aug) showing visible inundation along the Trishuli River -- independent confirmation outside this project's own Sentinel-1 SAR pipeline.",
+      "sources": [
+        {
+          "label": "NRSC Disaster Management Support Group portal",
+          "url": "https://bhuvan-app1.nrsc.gov.in/bhuvandisaster/"
+        }
+      ],
+      "logged_at": "2026-08-27T04:30:39Z"
+    },
+    {
+      "date": "2026-08-26T09:53:00Z",
+      "category": "activation",
+      "headline": "Copernicus EMS activates EMSR927 for the Bhote Koshi / Trishuli flood",
+      "body": "The EU's Copernicus Emergency Management Service opened a Rapid Mapping activation for this event, citing a Glacial Lake Outburst Flood (GLOF) as the reported trigger -- one input among several to the still-disputed cause debate. Delivery of the flood-extent/damage products for the Syapru Besi and Timure AOIs was expected 27 Aug 2026, 19:30 UTC.",
+      "sources": [
+        {
+          "label": "Copernicus EMS activation page",
+          "url": "https://mapping.emergency.copernicus.eu/activations/EMSR927/"
+        }
+      ],
+      "logged_at": "2026-08-27T04:30:39Z"
+    }
+  ]
+}
