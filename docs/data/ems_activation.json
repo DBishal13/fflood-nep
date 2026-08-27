@@ -30,12 +30,36 @@
         "aoi_name": "Timure",
         "aoi_number": 2,
         "product_type": "GRA",
-        "status": "I",
+        "status": "F",
         "expected_delivery": "2026-08-27T18:55:00",
+        "delivery_time": "2026-08-27T17:37:36.415348",
+        "download_path": "https://rapidmapping.emergency.copernicus.eu/backend/EMSR927/AOI02/GRA_PRODUCT/EMSR927_AOI02_GRA_PRODUCT_v1.zip",
+        "sensors": [
+          "Legion"
+        ]
+      },
+      {
+        "aoi_name": "Bidur",
+        "aoi_number": 3,
+        "product_type": "GRA",
+        "status": "W",
+        "expected_delivery": null,
         "delivery_time": null,
         "download_path": null,
         "sensors": [
-          "Legion"
+          null
+        ]
+      },
+      {
+        "aoi_name": "Bharatpur",
+        "aoi_number": 4,
+        "product_type": "GRA",
+        "status": "W",
+        "expected_delivery": null,
+        "delivery_time": null,
+        "download_path": null,
+        "sensors": [
+          null
         ]
       }
     ]
