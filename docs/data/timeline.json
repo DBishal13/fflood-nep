@@ -1,6 +1,23 @@
 {
   "entries": [
     {
+      "date": "2026-08-27T13:00:00Z",
+      "category": "other",
+      "headline": "ICIMOD warns a second flood is possible: landslide debris still blocking the river upstream",
+      "body": "ICIMOD (the intergovernmental International Centre for Integrated Mountain Development) reports the debris from the original avalanche/landslide may still be lodged at a narrow section of the Lende Khola on the Nepal-China border, forming a landslide dam -- and that water impounded behind it could be released suddenly as a second event. Chinese authorities have issued evacuation orders for the Gyirong (Jilong) port area on this basis. Separately, other reporting describes a lake continuing to expand behind the blockage with roughly 3 million cubic meters more water expected to flow in, raising breach risk further. ICIMOD is explicit that the ORIGINAL flood's cause remains unconfirmed: they describe a suspected ice-rock avalanche entering the Lende Khola as the likely trigger, but state no causal link has been established between the M4.4 earthquake and the flood, and that a glacial lake outburst (GLOF) specifically has not been confirmed either -- all three mechanisms already logged here remain live hypotheses. This is a live, monitorable risk directly relevant to this project's own corridor -- distinct from, and more urgent than, the original cause debate.",
+      "sources": [
+        {
+          "label": "ICIMOD press release",
+          "url": "https://www.icimod.org/press-release/major-flash-flood-sweeps-through-nepals-rasuwa-district-raising-fears-of-further-downstream-flooding"
+        },
+        {
+          "label": "Al Jazeera",
+          "url": "https://www.aljazeera.com/news/2026/8/26/at-least-eight-killed-in-nepal-flash-floods-that-swept-away-villages-roads"
+        }
+      ],
+      "logged_at": "2026-08-27T14:44:43Z"
+    },
+    {
       "date": "2026-08-27T11:00:00Z",
       "category": "casualty",
       "headline": "Rescue operations underway; missing-person tallies vary widely by scope",
