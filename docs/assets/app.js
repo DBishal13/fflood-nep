@@ -11,6 +11,22 @@ const GAUGE_URL = "https://raw.githubusercontent.com/nirajbhusal/rasuwa-flood-bu
 const PC_STAC_SEARCH_URL = "https://planetarycomputer.microsoft.com/api/stac/v1/search";
 const WORLDCOVER_COLLECTION = "esa-worldcover";
 
+// Planet Crisis Response's open STAC catalog for this exact event (CC-BY-NC-4.0, CORS-open):
+// https://source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26 -- a 5-scene PlanetScope
+// strip (3.8m, 27 May 2026, pre-monsoon baseline) that together mosaics the whole corridor.
+// Post-event PlanetScope exists too but is 62-93% cloud-obscured, so not worth surfacing here --
+// this is what SAR is for. Hardcoded (not a live search) since this is a fixed, one-time archive
+// for this specific event, not a growing collection like Planetary Computer's.
+const PLANET_CATALOG_URL = "https://source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26";
+const PLANET_THUMB_BASE = "https://data.source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26/pre-event/2026-05-27/items/";
+const PLANET_ITEMS = [
+  { id: "20260527_053217_72_254a", bbox: [85.137258, 28.358813, 85.502374, 28.591129] },
+  { id: "20260527_053219_95_254a", bbox: [85.104325, 28.218406, 85.471358, 28.450563] },
+  { id: "20260527_053221_96_254a", bbox: [85.071481, 28.076754, 85.437198, 28.308877] },
+  { id: "20260527_053224_18_254a", bbox: [85.038954, 27.935221, 85.404155, 28.168685] },
+  { id: "20260527_053226_41_254a", bbox: [85.006582, 27.794806, 85.373119, 28.028221] },
+].map((it) => ({ ...it, thumb: PLANET_THUMB_BASE + it.id + "/" + it.id + "_thumbnail.png" }));
+
 const CATEGORIES = [
   { key: "buildings", label: "Buildings" },
   { key: "roads", label: "Roads" },
@@ -500,6 +516,8 @@ function ensureSarLayers(url, coords) {
   sarMap.addSource("sar-image", { type: "image", url, coordinates: coords });
   sarMap.addLayer({ id: "sar-image-layer", type: "raster", source: "sar-image" });
 
+  ensurePlanetLayers();
+
   // The actual mapped river channel (HOT/OSM waterways), distinct from the AOI corridor buffer.
   sarMap.addSource("sar-hot", { type: "vector", url: "pmtiles://" + HOT_PMTILES_URL });
   sarMap.addLayer({
@@ -514,6 +532,20 @@ function ensureSarLayers(url, coords) {
     paint: { "line-color": cssVar("--select"), "line-width": 2.5 },
   });
   loadAoiGeojsonOnce().then((geojson) => { if (geojson) sarMap.getSource("sar-aoi").setData(geojson); });
+}
+
+// Planet Crisis Response's 5-scene PlanetScope strip, mosaicked as 5 separate georeferenced image
+// layers (each keeps its own bbox) rather than one -- unlike SAR/land-cover there's no single
+// full-AOI image to point at. Added once, then just shown/hidden by visibility.
+const PLANET_LAYER_IDS = PLANET_ITEMS.map((_, i) => "sar-planet-" + i);
+function ensurePlanetLayers() {
+  if (sarMap.getSource(PLANET_LAYER_IDS[0])) return;
+  PLANET_ITEMS.forEach((it, i) => {
+    const [minx, miny, maxx, maxy] = it.bbox;
+    const coords = [[minx, maxy], [maxx, maxy], [maxx, miny], [minx, miny]];
+    sarMap.addSource(PLANET_LAYER_IDS[i], { type: "image", url: it.thumb, coordinates: coords });
+    sarMap.addLayer({ id: PLANET_LAYER_IDS[i], type: "raster", source: PLANET_LAYER_IDS[i], layout: { visibility: "none" } });
+  });
 }
 
 function applyBaseImage() {
@@ -534,25 +566,48 @@ function applyBaseImage() {
   else sarMap.once("load", apply);
 }
 
+const PLANET_CAPTION =
+  "PlanetScope pre-event mosaic (27 May 2026, 3.8m, 5 scenes) — pre-monsoon baseline for terrain " +
+  "context, not post-event evidence (post-event PlanetScope over this corridor is 62–93% cloud-" +
+  "obscured). Courtesy <a href=\"" + PLANET_CATALOG_URL + "\" target=\"_blank\" rel=\"noopener\">" +
+  "Planet Labs PBC / Planet Crisis Response Program</a>, CC-BY-NC-4.0.";
+let currentSarCaption = "";
+
 function setSarBaseMode(mode) {
   sarBaseMode = mode;
   document.getElementById("sarLayerBtn").classList.toggle("active", mode === "sar");
   document.getElementById("landcoverLayerBtn").classList.toggle("active", mode === "landcover");
+  document.getElementById("planetLayerBtn").classList.toggle("active", mode === "planet");
+
   const legend = document.getElementById("sarLegend");
   if (mode === "sar") {
     legend.textContent = "VV+VH · 10m · sentinel-1-rtc";
     legend.title = "";
-  } else {
+  } else if (mode === "landcover") {
     legend.textContent = "ESA WorldCover 10m 2021";
     legend.title = "green = tree · yellow = grass/crop · pink = built-up · blue = water · gray = bare";
+  } else {
+    legend.textContent = "PlanetScope · 3.8m · 27 May 2026";
+    legend.title = "Pre-monsoon baseline, CC-BY-NC-4.0 -- see caption below";
   }
-  applyBaseImage();
+
+  if (mode === "planet") {
+    if (sarMap.getLayer("sar-image-layer")) sarMap.setLayoutProperty("sar-image-layer", "visibility", "none");
+    ensurePlanetLayers();
+    PLANET_LAYER_IDS.forEach((id) => { if (sarMap.getLayer(id)) sarMap.setLayoutProperty(id, "visibility", "visible"); });
+  } else {
+    PLANET_LAYER_IDS.forEach((id) => { if (sarMap.getLayer(id)) sarMap.setLayoutProperty(id, "visibility", "none"); });
+    if (sarMap.getLayer("sar-image-layer")) sarMap.setLayoutProperty("sar-image-layer", "visibility", "visible");
+    applyBaseImage();
+  }
+
+  document.getElementById("radarCaption").innerHTML = mode === "planet" ? PLANET_CAPTION : currentSarCaption;
 }
 document.getElementById("sarLayerBtn").addEventListener("click", () => setSarBaseMode("sar"));
 document.getElementById("landcoverLayerBtn").addEventListener("click", () => setSarBaseMode("landcover"));
+document.getElementById("planetLayerBtn").addEventListener("click", () => setSarBaseMode("planet"));
 
 function showScene(item, label, bbox) {
-  const caption = document.getElementById("radarCaption");
   const loading = document.getElementById("radarLoading");
   const url = previewUrl(item, bbox, 1024);
 
@@ -572,10 +627,11 @@ function showScene(item, label, bbox) {
   });
 
   const dt = item.properties && item.properties.datetime;
-  caption.innerHTML =
+  currentSarCaption =
     "Sentinel‑1 RTC composite (" + label.replace("_", "-") + ") — scroll or drag to inspect; cyan traces the mapped " +
     "river channel, outline shows the exact HOT AOI boundary · " +
     '<span class="mono">' + item.id + (dt ? " · " + dt : "") + "</span>";
+  if (sarBaseMode !== "planet") document.getElementById("radarCaption").innerHTML = currentSarCaption;
 }
 
 // ==================== FLOOD EXTENT ====================
@@ -673,10 +729,36 @@ function emsCard(snapshot) {
   return card;
 }
 
+function planetCard() {
+  const card = document.createElement("div");
+  card.className = "gcard";
+  card.innerHTML =
+    '<div class="gcard-top">' +
+      '<div>' +
+        '<div class="gcard-name">Planet Crisis Response · PlanetScope</div>' +
+        '<div class="gcard-district">3.8m optical, 14 scenes · CC-BY-NC-4.0</div>' +
+      "</div>" +
+      '<span class="chip chip-ok">Open STAC catalog</span>' +
+    "</div>" +
+    '<div style="font-size:.8rem; color:var(--text-dim); margin:8px 0 12px; line-height:1.45;">' +
+      "Planet published a dedicated STAC catalog for this event: 5 pre-event scenes (27 May 2026, pre-monsoon " +
+      "baseline, shown in the SAR panel's “Planet” tab) and 9 post-event scenes (26 Aug 2026) -- though the " +
+      "post-event imagery is 62–93% cloud-obscured, which is itself why this project relies on radar. Its own " +
+      "catalog description cites an ice/rock avalanche from an upper-catchment glacier as the preliminary trigger, " +
+      "with the cause still under investigation and casualty figures still provisional at time of release." +
+    "</div>" +
+    '<div class="gcard-foot">' +
+      "<span>Cited 26 Aug 2026</span>" +
+      '<a href="' + PLANET_CATALOG_URL + '" target="_blank" rel="noopener">Source Cooperative catalog →</a>' +
+    "</div>";
+  return card;
+}
+
 function loadConfirmations() {
   const grid = document.getElementById("confirmationGrid");
   grid.innerHTML = "";
   grid.appendChild(nrscCard());
+  grid.appendChild(planetCard());
   fetch("data/ems_activation.json")
     .then((r) => (r.ok ? r.json() : null))
     .catch(() => null)
