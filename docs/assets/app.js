@@ -22,27 +22,41 @@ const PLANET_CATALOG_URL = "https://source.coop/planet/disasterdata/nepal-flash-
 function planetThumbUrl(datePath, id) {
   return "https://data.source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26/" + datePath + "/items/" + id + "/" + id + "_thumbnail.png";
 }
+// NOTE: Source Cooperative restructured this catalog's folder paths on 27 Aug 2026 to prefix the
+// sensor name (e.g. "post-event/2026-08-26" -> "post-event/planetscope-2026-08-26"). Verified live
+// before changing these -- the old paths now 404. If images stop loading again, re-check
+// https://data.source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26/{pre,post}-event/catalog.json
+// for the current child collection paths rather than assuming these are still right.
 const PLANET_PRE_ITEMS = [
   { id: "20260527_053217_72_254a", bbox: [85.137258, 28.358813, 85.502374, 28.591129] },
   { id: "20260527_053219_95_254a", bbox: [85.104325, 28.218406, 85.471358, 28.450563] },
   { id: "20260527_053221_96_254a", bbox: [85.071481, 28.076754, 85.437198, 28.308877] },
   { id: "20260527_053224_18_254a", bbox: [85.038954, 27.935221, 85.404155, 28.168685] },
   { id: "20260527_053226_41_254a", bbox: [85.006582, 27.794806, 85.373119, 28.028221] },
-].map((it) => ({ ...it, thumb: planetThumbUrl("pre-event/2026-05-27", it.id) }));
+].map((it) => ({ ...it, thumb: planetThumbUrl("pre-event/planetscope-2026-05-27", it.id) }));
 const PLANET_POST_ITEMS = [
   { id: "20260826_050125_99_255f", bbox: [85.032198, 28.418252, 85.412170, 28.659454] },
   { id: "20260826_050128_33_255f", bbox: [84.997158, 28.271094, 85.377746, 28.512441] },
   { id: "20260826_050130_66_255f", bbox: [84.963054, 28.123263, 85.345506, 28.365422] },
   { id: "20260826_050133_00_255f", bbox: [84.929006, 27.976294, 85.310602, 28.218324] },
   { id: "20260826_050135_34_255f", bbox: [84.894307, 27.829256, 85.275845, 28.071583] },
-].map((it) => ({ ...it, thumb: planetThumbUrl("post-event/2026-08-26", it.id) }));
+].map((it) => ({ ...it, thumb: planetThumbUrl("post-event/planetscope-2026-08-26", it.id) }));
 // SkySat: 0.8m post-event, two focal collects over Rasuwagadhi and Syabrubesi (27 Aug 2026) --
 // far sharper than the 3.8m PlanetScope scenes, but covers only these two small areas, not the
 // whole corridor.
 const PLANET_SKYSAT_ITEMS = [
   { id: "20260827_020055_ssc1_u0001", bbox: [85.312113, 28.153141, 85.442798, 28.366091] },
   { id: "20260827_020055_ssc1_u0002", bbox: [85.278669, 28.082206, 85.374289, 28.210064] },
-].map((it) => ({ ...it, thumb: planetThumbUrl("post-event/2026-08-27", it.id) }));
+].map((it) => ({ ...it, thumb: planetThumbUrl("post-event/skysat-2026-08-27", it.id) }));
+// Pelican: 0.55m post-event, three sequential frames Syabrubesi->Rasuwagadhi (27 Aug 2026,
+// ~4h after the SkySat pass) -- the sharpest imagery in the catalog. Metadata claims 0% clear
+// fraction, but a direct look at the thumbnails shows real clear ground (a road clearly visible
+// end to end in one frame) -- the transparency pipeline handles the cloud regardless.
+const PLANET_PELICAN_ITEMS = [
+  { id: "20260827_060956_98_3009", bbox: [85.319186, 28.249114, 85.434067, 28.351218] },
+  { id: "20260827_060958_31_3009", bbox: [85.300347, 28.163676, 85.413824, 28.266138] },
+  { id: "20260827_060959_65_3009", bbox: [85.280738, 28.078662, 85.394566, 28.180734] },
+].map((it) => ({ ...it, thumb: planetThumbUrl("post-event/pelican-2026-08-27", it.id) }));
 
 const CATEGORIES = [
   { key: "buildings", label: "Buildings" },
@@ -848,6 +862,12 @@ const PLANET_PHASES = {
       "Only two focal collects, over Rasuwagadhi and Syabrubesi specifically, not the whole corridor -- ~50% cloud, clear " +
       "fraction near 8%, so most of what's visible is sharp where it shows through at all.",
   },
+  pelican: {
+    items: PLANET_PELICAN_ITEMS, legend: "27 Aug 2026 · 0.55m · 3 frames",
+    caption: "Pelican post-event, the sharpest imagery available (27 Aug 2026, 0.55m -- about 7x sharper than PlanetScope). " +
+      "Three sequential frames Syabrubesi → Rasuwagadhi, overlapping the SkySat footprint. Planet's own metadata reports " +
+      "0% clear fraction, but real clear ground is visible on inspection -- treat the cloud stats as conservative.",
+  },
 };
 
 function planetItemsBounds(items) {
@@ -861,6 +881,7 @@ async function showPlanetPhase(phase) {
   document.getElementById("planetPreBtn").classList.toggle("active", phase === "pre");
   document.getElementById("planetPostBtn").classList.toggle("active", phase === "post");
   document.getElementById("planetSkysatBtn").classList.toggle("active", phase === "skysat");
+  document.getElementById("planetPelicanBtn").classList.toggle("active", phase === "pelican");
 
   const loading = document.getElementById("planetLoading");
   loading.style.display = "flex";
@@ -881,8 +902,8 @@ async function showPlanetPhase(phase) {
       addCorridorRiverLayers(planetMap, "planet");
       applyCorridorRiverToggles(planetMap, "planet", "planetCorridorToggle", "planetRiverToggle");
     }
-    if (phase === "skysat") {
-      // SkySat covers two small focal areas, not the whole corridor -- zoom to where the detail actually is.
+    if (phase === "skysat" || phase === "pelican") {
+      // Both cover small focal areas, not the whole corridor -- zoom to where the detail actually is.
       planetMap.fitBounds(planetItemsBounds(items), { padding: 24, duration: 400 });
     } else if (!planetFitted) {
       planetMap.fitBounds(AOI_BBOX, { padding: 24, duration: 0 });
@@ -899,6 +920,7 @@ async function showPlanetPhase(phase) {
 document.getElementById("planetPreBtn").addEventListener("click", () => showPlanetPhase("pre"));
 document.getElementById("planetPostBtn").addEventListener("click", () => showPlanetPhase("post"));
 document.getElementById("planetSkysatBtn").addEventListener("click", () => showPlanetPhase("skysat"));
+document.getElementById("planetPelicanBtn").addEventListener("click", () => showPlanetPhase("pelican"));
 
 // ---- Planet corridor/river toggles + pre/post swipe compare ----
 
