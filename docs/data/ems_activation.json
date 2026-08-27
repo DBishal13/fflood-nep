@@ -18,8 +18,8 @@
         "aoi_name": "Syapru Besi",
         "aoi_number": 1,
         "product_type": "GRA",
-        "status": "W",
-        "expected_delivery": "2026-08-27T18:05:00",
+        "status": "I",
+        "expected_delivery": "2026-08-27T19:41:00",
         "delivery_time": null,
         "download_path": null,
         "sensors": [

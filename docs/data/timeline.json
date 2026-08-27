@@ -1,6 +1,23 @@
 {
   "entries": [
     {
+      "date": "2026-08-27T10:00:00Z",
+      "category": "recovery",
+      "headline": "Infrastructure damage figures refined: 19 bridges, ~430MW hydropower capacity",
+      "body": "Nepal Electricity Authority now puts total damaged generation capacity at approximately 430MW (over 12% of Nepal's national hydropower capacity) across the same six facilities reported earlier -- Rasuwagadhi, Chilime, Trishuli 3A, the Trishuli 3B Hub 220kV substation, Trishuli Hydropower Station, and Devighat Hydropower Station -- a modest upward revision from the roughly 405MW/11-project figure in the previous entry. Road-damage reporting now specifies 19 motorable bridges destroyed alongside the ~40km of paved road already noted, and the Pasang Lhamu Highway toward Syabrubesi is confirmed washed away in sections, with restoration work starting only where access currently allows. No confirmed restoration timeline or restart has been reported yet for this event specifically.",
+      "sources": [
+        {
+          "label": "Nepal News",
+          "url": "https://english.nepalnews.com/s/business/rasuwa-flood-damages-6-major-hydropower-transmission-facilities-disrupts-power-supply/"
+        },
+        {
+          "label": "Karmactive",
+          "url": "https://www.karmactive.com/nepal-tibet-border-flood-august-2026-disaster-update/"
+        }
+      ],
+      "logged_at": "2026-08-27T10:43:07Z"
+    },
+    {
       "date": "2026-08-27T08:00:00Z",
       "category": "cause",
       "headline": "Cause investigation reverses a key assumption; rainfall explicitly ruled out",
