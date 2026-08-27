@@ -1,6 +1,32 @@
 {
   "entries": [
     {
+      "date": "2026-08-27T23:19:00Z",
+      "category": "other",
+      "headline": "Secondary flood risk escalates: upstream lake reported rising, not stabilizing",
+      "body": "The debris-blocked lake upstream (see earlier entry on ICIMOD's warning) is now reported by NDRRMA as actively RISING with breach risk, not stabilizing or clearing -- authorities are advising residents to move away from the river as a precaution. This is an escalation from the 'under investigation' framing of earlier reports, not a resolution. This remains the single most safety-relevant open item in this timeline: a live, monitorable hazard directly on this project's own corridor.",
+      "sources": [
+        {
+          "label": "NESRA FloodWatch",
+          "url": "https://nesraspace.org/floodwatch/rasuwa-2026/"
+        }
+      ],
+      "logged_at": "2026-08-27T20:54:58Z"
+    },
+    {
+      "date": "2026-08-27T23:19:00Z",
+      "category": "casualty",
+      "headline": "Recovered bodies rise sharply to 389; clarifying how the missing figures relate",
+      "body": "Nepal Police's district tally now stands at 389 recovered bodies (up from 165), per NDRRMA reporting as of 27 Aug 23:19 NPT. Separately, 466 people are recorded as injured-and-rescued (a distinct, non-additive metric). The 'out of contact' figure remains 823 overall (NDRRMA Update 5) -- NESRA FloodWatch specifically flags that a separately-reported 517 foreign-national figure is a SUBSET of that 823, not an addition to it, since this kind of figure has been widely misreported/double-counted in press coverage.",
+      "sources": [
+        {
+          "label": "NESRA FloodWatch",
+          "url": "https://nesraspace.org/floodwatch/rasuwa-2026/"
+        }
+      ],
+      "logged_at": "2026-08-27T20:54:58Z"
+    },
+    {
       "date": "2026-08-27T19:41:00Z",
       "category": "activation",
       "headline": "Copernicus EMS delivers its second product: both original AOIs now complete",
@@ -135,6 +161,19 @@
         }
       ],
       "logged_at": "2026-08-27T08:42:10Z"
+    },
+    {
+      "date": "2026-08-27T06:10:00Z",
+      "category": "imagery",
+      "headline": "Planet adds Pelican imagery: the sharpest resolution yet (0.55m), but heavily cloud-obscured",
+      "body": "A new post-event collection appeared in Planet's catalog: 3 sequential Pelican frames running north from Syabrubesi to the Rasuwagadhi border crossing, acquired 06:10 UTC 27 Aug -- about four hours after the SkySat collects, overlapping their footprints. At ~0.55m ground sample distance this is the sharpest imagery in the catalog (sharper than the 0.8m SkySat and far sharper than the 3.8m PlanetScope). However, Planet reports 83-85% cloud cover with a 0% clear fraction across all three frames -- likely limiting practical usefulness compared to SkySat's ~8% clear fraction, though this may improve if any partial-clear-sky pixels exist that the summary cloud stat doesn't fully capture. Not yet integrated into the web UI's Planet imagery panel.",
+      "sources": [
+        {
+          "label": "Source Cooperative catalog",
+          "url": "https://source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26"
+        }
+      ],
+      "logged_at": "2026-08-27T20:54:17Z"
     },
     {
       "date": "2026-08-27T06:00:00Z",
