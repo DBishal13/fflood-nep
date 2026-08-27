@@ -1,6 +1,49 @@
 {
   "entries": [
     {
+      "date": "2026-08-27T06:00:00Z",
+      "category": "recovery",
+      "headline": "Scale of infrastructure damage detailed; this is the second such event on this river in 14 months",
+      "body": "A 42km section of the Betrawati (Nuwakot) to Rasuwagadhi road -- the only overland link between Kathmandu and Tibet -- was damaged or washed away, with the Syabrubesi-Rasuwagadhi stretch cut in more than ten places. 11 hydropower projects with a combined 405MW capacity were damaged; the 111MW Rasuwagadhi, Chilime, and Trishuli-3A plants have all halted production. Notably, this is the second time in 14 months this river system has done this: a July 2025 glacial outburst down the Lhende destroyed the same Nepal-China friendship bridge at Rasuwagadhi and killed more than a dozen people -- a recurring risk pattern, not an isolated event.",
+      "sources": [
+        {
+          "label": "Kathmandu Post",
+          "url": "https://kathmandupost.com/national/2026/08/26/major-flood-damages-syabrubesi-hydropower-projects-in-rasuwa"
+        }
+      ],
+      "logged_at": "2026-08-27T06:42:52Z"
+    },
+    {
+      "date": "2026-08-27T06:00:00Z",
+      "category": "casualty",
+      "headline": "Casualty figures rise further; sources still disagree on the exact count",
+      "body": "Nepal Police reportedly put the death toll at 162, while a separate Prime Minister's Office statement cited 95 bodies recovered -- the discrepancy itself hasn't been resolved in reporting. On the Chinese side, missing-person estimates have risen to 550+ (up from 265 previously reported) against 3 confirmed dead. New granularity: 85 Nepali security personnel are among the missing (44 Army, 28 Police, 13 Armed Police Force), plus 60 hydropower workers and 391 foreign + 93 domestic tourists out of contact. All figures remain provisional and inconsistent across sources -- treat any single number cautiously.",
+      "sources": [
+        {
+          "label": "Kathmandu Post",
+          "url": "https://kathmandupost.com/national/2026/08/26/update-rasuwa-flood-death-toll-climbs-to-72-as-dozens-remain-missing"
+        },
+        {
+          "label": "CNN live updates",
+          "url": "https://www.cnn.com/2026/08/26/world/live-news/nepal-flash-flooding-floods-intl"
+        }
+      ],
+      "logged_at": "2026-08-27T06:42:52Z"
+    },
+    {
+      "date": "2026-08-27T02:00:00Z",
+      "category": "imagery",
+      "headline": "Planet adds high-resolution SkySat imagery over Rasuwagadhi and Syabrubesi",
+      "body": "A new post-event collection appeared in Planet's catalog: 2 SkySat scenes at ~0.8m resolution (vs. 3.8m for the PlanetScope scenes already in this project), acquired 02:00 UTC 27 Aug -- about a day after the flood. Fine enough to resolve individual buildings, bridges, and road sections. Coverage is patchy (50% cloud, ~8% clear fraction) but sharp where visible. Not yet integrated into the web UI's Planet imagery panel (still PlanetScope-only).",
+      "sources": [
+        {
+          "label": "Source Cooperative catalog",
+          "url": "https://source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26"
+        }
+      ],
+      "logged_at": "2026-08-27T06:42:52Z"
+    },
+    {
       "date": "2026-08-26T20:00:00Z",
       "category": "cause",
       "headline": "Cause still disputed; casualty figures still provisional",
