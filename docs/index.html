@@ -91,7 +91,6 @@
             <div class="seg">
               <button id="sarLayerBtn" class="active">SAR</button>
               <button id="landcoverLayerBtn">Land cover</button>
-              <button id="planetLayerBtn">Planet</button>
             </div>
           </div>
           <div style="display:flex; align-items:center; gap:12px;">
@@ -118,6 +117,52 @@
           <dt>Threshold</dt><dd class="mono">−3.0 dB</dd>
           <dt>Water mask</dt><dd class="mono">ESA WorldCover</dd>
           <dt>Source</dt><dd><a href="https://planetarycomputer.microsoft.com" target="_blank" rel="noopener">Planetary Computer</a></dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Planet imagery</h2>
+      <span class="section-sub">PlanetScope 3.8m optical mosaic · nodata/cloud padding keyed transparent client-side</span>
+    </div>
+    <div class="sar-shell">
+      <div class="radar-card">
+        <div class="radar-toolbar">
+          <div class="seg">
+            <button id="planetPreBtn" class="active">Pre-event</button>
+            <button id="planetPostBtn">Post-event</button>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <span class="mono" id="planetLegend" style="font-size:.72rem; color:var(--text-faint);">27 May 2026 · 3.8m</span>
+            <button class="map-reset" id="planetReset">Recenter</button>
+          </div>
+        </div>
+        <div class="radar-frame" id="planetFrame">
+          <div id="planetMap" class="sar-map"></div>
+          <span class="radar-loading" id="planetLoading" style="display:none;">Compositing mosaic…</span>
+        </div>
+        <div class="radar-caption" id="planetCaption"></div>
+      </div>
+
+      <div class="status-card">
+        <div>
+          <p class="eyebrow" style="margin-bottom:6px;">Planet Crisis Response</p>
+          <div class="status-headline">PlanetScope mosaic</div>
+          <p class="status-body">
+            An open STAC catalog Planet published for this exact event. Post-event coverage is heavily
+            cloud-obscured — exactly why this project relies on Sentinel-1 SAR for the actual flood-extent
+            detection above, not this imagery.
+          </p>
+        </div>
+        <dl class="kv-grid">
+          <dt>Provider</dt><dd>Planet Labs PBC</dd>
+          <dt>Resolution</dt><dd class="mono">3.8 m/px</dd>
+          <dt>Pre-event</dt><dd class="mono">27 May 2026 · 5 scenes</dd>
+          <dt>Post-event</dt><dd class="mono">26 Aug 2026 · 5 scenes, 62–93% cloud</dd>
+          <dt>License</dt><dd class="mono">CC-BY-NC-4.0</dd>
+          <dt>Source</dt><dd><a href="https://source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26" target="_blank" rel="noopener">Source Cooperative →</a></dd>
         </dl>
       </div>
     </div>
@@ -172,6 +217,6 @@
 
 <script src="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3/dist/pmtiles.js"></script>
-<script src="assets/app.js?v=20260827d"></script>
+<script src="assets/app.js?v=20260827e"></script>
 </body>
 </html>

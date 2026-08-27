@@ -12,20 +12,30 @@ const PC_STAC_SEARCH_URL = "https://planetarycomputer.microsoft.com/api/stac/v1/
 const WORLDCOVER_COLLECTION = "esa-worldcover";
 
 // Planet Crisis Response's open STAC catalog for this exact event (CC-BY-NC-4.0, CORS-open):
-// https://source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26 -- a 5-scene PlanetScope
-// strip (3.8m, 27 May 2026, pre-monsoon baseline) that together mosaics the whole corridor.
-// Post-event PlanetScope exists too but is 62-93% cloud-obscured, so not worth surfacing here --
-// this is what SAR is for. Hardcoded (not a live search) since this is a fixed, one-time archive
-// for this specific event, not a growing collection like Planetary Computer's.
+// https://source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26 -- PlanetScope strips
+// (3.8m) that together mosaic the whole corridor. Hardcoded (not a live search) since this is a
+// fixed, one-time archive for this specific event, not a growing collection like Planetary
+// Computer's. Post-event coverage is 62-93% cloud -- shown anyway (chroma-keyed transparent, see
+// planetThumbTransparent()) since even the gaps between clouds are informative, but it's exactly
+// why this project's actual flood-extent detection relies on SAR, not this.
 const PLANET_CATALOG_URL = "https://source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26";
-const PLANET_THUMB_BASE = "https://data.source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26/pre-event/2026-05-27/items/";
-const PLANET_ITEMS = [
+function planetThumbUrl(datePath, id) {
+  return "https://data.source.coop/planet/disasterdata/nepal-flash-flood-2026-08-26/" + datePath + "/items/" + id + "/" + id + "_thumbnail.png";
+}
+const PLANET_PRE_ITEMS = [
   { id: "20260527_053217_72_254a", bbox: [85.137258, 28.358813, 85.502374, 28.591129] },
   { id: "20260527_053219_95_254a", bbox: [85.104325, 28.218406, 85.471358, 28.450563] },
   { id: "20260527_053221_96_254a", bbox: [85.071481, 28.076754, 85.437198, 28.308877] },
   { id: "20260527_053224_18_254a", bbox: [85.038954, 27.935221, 85.404155, 28.168685] },
   { id: "20260527_053226_41_254a", bbox: [85.006582, 27.794806, 85.373119, 28.028221] },
-].map((it) => ({ ...it, thumb: PLANET_THUMB_BASE + it.id + "/" + it.id + "_thumbnail.png" }));
+].map((it) => ({ ...it, thumb: planetThumbUrl("pre-event/2026-05-27", it.id) }));
+const PLANET_POST_ITEMS = [
+  { id: "20260826_050125_99_255f", bbox: [85.032198, 28.418252, 85.412170, 28.659454] },
+  { id: "20260826_050128_33_255f", bbox: [84.997158, 28.271094, 85.377746, 28.512441] },
+  { id: "20260826_050130_66_255f", bbox: [84.963054, 28.123263, 85.345506, 28.365422] },
+  { id: "20260826_050133_00_255f", bbox: [84.929006, 27.976294, 85.310602, 28.218324] },
+  { id: "20260826_050135_34_255f", bbox: [84.894307, 27.829256, 85.275845, 28.071583] },
+].map((it) => ({ ...it, thumb: planetThumbUrl("post-event/2026-08-26", it.id) }));
 
 const CATEGORIES = [
   { key: "buildings", label: "Buildings" },
@@ -516,8 +526,6 @@ function ensureSarLayers(url, coords) {
   sarMap.addSource("sar-image", { type: "image", url, coordinates: coords });
   sarMap.addLayer({ id: "sar-image-layer", type: "raster", source: "sar-image" });
 
-  ensurePlanetLayers();
-
   // The actual mapped river channel (HOT/OSM waterways), distinct from the AOI corridor buffer.
   sarMap.addSource("sar-hot", { type: "vector", url: "pmtiles://" + HOT_PMTILES_URL });
   sarMap.addLayer({
@@ -532,20 +540,6 @@ function ensureSarLayers(url, coords) {
     paint: { "line-color": cssVar("--select"), "line-width": 2.5 },
   });
   loadAoiGeojsonOnce().then((geojson) => { if (geojson) sarMap.getSource("sar-aoi").setData(geojson); });
-}
-
-// Planet Crisis Response's 5-scene PlanetScope strip, mosaicked as 5 separate georeferenced image
-// layers (each keeps its own bbox) rather than one -- unlike SAR/land-cover there's no single
-// full-AOI image to point at. Added once, then just shown/hidden by visibility.
-const PLANET_LAYER_IDS = PLANET_ITEMS.map((_, i) => "sar-planet-" + i);
-function ensurePlanetLayers() {
-  if (sarMap.getSource(PLANET_LAYER_IDS[0])) return;
-  PLANET_ITEMS.forEach((it, i) => {
-    const [minx, miny, maxx, maxy] = it.bbox;
-    const coords = [[minx, maxy], [maxx, maxy], [maxx, miny], [minx, miny]];
-    sarMap.addSource(PLANET_LAYER_IDS[i], { type: "image", url: it.thumb, coordinates: coords });
-    sarMap.addLayer({ id: PLANET_LAYER_IDS[i], type: "raster", source: PLANET_LAYER_IDS[i], layout: { visibility: "none" } });
-  });
 }
 
 function applyBaseImage() {
@@ -566,46 +560,23 @@ function applyBaseImage() {
   else sarMap.once("load", apply);
 }
 
-const PLANET_CAPTION =
-  "PlanetScope pre-event mosaic (27 May 2026, 3.8m, 5 scenes) — pre-monsoon baseline for terrain " +
-  "context, not post-event evidence (post-event PlanetScope over this corridor is 62–93% cloud-" +
-  "obscured). Courtesy <a href=\"" + PLANET_CATALOG_URL + "\" target=\"_blank\" rel=\"noopener\">" +
-  "Planet Labs PBC / Planet Crisis Response Program</a>, CC-BY-NC-4.0.";
-let currentSarCaption = "";
-
 function setSarBaseMode(mode) {
   sarBaseMode = mode;
   document.getElementById("sarLayerBtn").classList.toggle("active", mode === "sar");
   document.getElementById("landcoverLayerBtn").classList.toggle("active", mode === "landcover");
-  document.getElementById("planetLayerBtn").classList.toggle("active", mode === "planet");
 
   const legend = document.getElementById("sarLegend");
   if (mode === "sar") {
     legend.textContent = "VV+VH · 10m · sentinel-1-rtc";
     legend.title = "";
-  } else if (mode === "landcover") {
+  } else {
     legend.textContent = "ESA WorldCover 10m 2021";
     legend.title = "green = tree · yellow = grass/crop · pink = built-up · blue = water · gray = bare";
-  } else {
-    legend.textContent = "PlanetScope · 3.8m · 27 May 2026";
-    legend.title = "Pre-monsoon baseline, CC-BY-NC-4.0 -- see caption below";
   }
-
-  if (mode === "planet") {
-    if (sarMap.getLayer("sar-image-layer")) sarMap.setLayoutProperty("sar-image-layer", "visibility", "none");
-    ensurePlanetLayers();
-    PLANET_LAYER_IDS.forEach((id) => { if (sarMap.getLayer(id)) sarMap.setLayoutProperty(id, "visibility", "visible"); });
-  } else {
-    PLANET_LAYER_IDS.forEach((id) => { if (sarMap.getLayer(id)) sarMap.setLayoutProperty(id, "visibility", "none"); });
-    if (sarMap.getLayer("sar-image-layer")) sarMap.setLayoutProperty("sar-image-layer", "visibility", "visible");
-    applyBaseImage();
-  }
-
-  document.getElementById("radarCaption").innerHTML = mode === "planet" ? PLANET_CAPTION : currentSarCaption;
+  applyBaseImage();
 }
 document.getElementById("sarLayerBtn").addEventListener("click", () => setSarBaseMode("sar"));
 document.getElementById("landcoverLayerBtn").addEventListener("click", () => setSarBaseMode("landcover"));
-document.getElementById("planetLayerBtn").addEventListener("click", () => setSarBaseMode("planet"));
 
 function showScene(item, label, bbox) {
   const loading = document.getElementById("radarLoading");
@@ -627,12 +598,125 @@ function showScene(item, label, bbox) {
   });
 
   const dt = item.properties && item.properties.datetime;
-  currentSarCaption =
+  document.getElementById("radarCaption").innerHTML =
     "Sentinel‑1 RTC composite (" + label.replace("_", "-") + ") — scroll or drag to inspect; cyan traces the mapped " +
     "river channel, outline shows the exact HOT AOI boundary · " +
     '<span class="mono">' + item.id + (dt ? " · " + dt : "") + "</span>";
-  if (sarBaseMode !== "planet") document.getElementById("radarCaption").innerHTML = currentSarCaption;
 }
+
+// ==================== PLANET IMAGERY (separate panel, separate map) ====================
+
+const planetMap = new maplibregl.Map({
+  container: "planetMap",
+  style: { version: 8, sources: {}, layers: [{ id: "bg", type: "background", paint: { "background-color": "#0a0805" } }] },
+  center: [(AOI_BBOX[0] + AOI_BBOX[2]) / 2, (AOI_BBOX[1] + AOI_BBOX[3]) / 2],
+  zoom: 9,
+  attributionControl: false,
+});
+planetMap.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+window.planetMap = planetMap;
+
+document.getElementById("planetReset").addEventListener("click", () => {
+  planetMap.fitBounds(AOI_BBOX, { padding: 24, duration: 400 });
+});
+
+// Each PlanetScope thumbnail carries an opaque white nodata/cloud fill that, drawn straight onto
+// a MapLibre image source, shows up as ugly rectangular seams between adjacent scenes (an actual
+// user-reported problem: the raw mosaic looked like stacked white index cards). Fetching as a
+// blob and re-drawing through a canvas keeps the canvas untainted regardless of the source's CORS
+// headers, so near-white pixels (nodata padding AND cloud, which are visually indistinguishable
+// in this product) can be keyed to transparent -- neighboring tiles show through instead of a
+// hard white edge, and it's a reasonable bonus that heavy post-event cloud gets "seen through"
+// wherever there's a gap.
+const planetTransparentCache = new Map();
+async function planetThumbTransparent(url) {
+  if (planetTransparentCache.has(url)) return planetTransparentCache.get(url);
+  const p = (async () => {
+    try {
+      const resp = await fetch(url);
+      const blob = await resp.blob();
+      const bitmap = await createImageBitmap(blob);
+      const canvas = document.createElement("canvas");
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(bitmap, 0, 0);
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const d = imgData.data;
+      for (let i = 0; i < d.length; i += 4) {
+        if (d[i] > 248 && d[i + 1] > 248 && d[i + 2] > 248) d[i + 3] = 0;
+      }
+      ctx.putImageData(imgData, 0, 0);
+      return canvas.toDataURL("image/png");
+    } catch (e) {
+      return url; // fall back to the raw (opaque) thumbnail rather than showing nothing
+    }
+  })();
+  planetTransparentCache.set(url, p);
+  return p;
+}
+
+let planetPhase = "pre";
+let planetLayerIds = [];
+let planetFitted = false;
+
+async function showPlanetPhase(phase) {
+  planetPhase = phase;
+  document.getElementById("planetPreBtn").classList.toggle("active", phase === "pre");
+  document.getElementById("planetPostBtn").classList.toggle("active", phase === "post");
+
+  const loading = document.getElementById("planetLoading");
+  loading.style.display = "flex";
+
+  const items = phase === "pre" ? PLANET_PRE_ITEMS : PLANET_POST_ITEMS;
+  const legend = document.getElementById("planetLegend");
+  legend.textContent = phase === "pre" ? "27 May 2026 · 3.8m" : "26 Aug 2026 · 3.8m · heavy cloud";
+
+  const ready = () => {
+    // remove the previous phase's layers/sources before adding the new phase's
+    planetLayerIds.forEach((id) => { if (planetMap.getLayer(id)) planetMap.removeLayer(id); if (planetMap.getSource(id)) planetMap.removeSource(id); });
+    planetLayerIds = items.map((_, i) => "planet-" + phase + "-" + i);
+
+    Promise.all(items.map((it) => planetThumbTransparent(it.thumb))).then((urls) => {
+      items.forEach((it, i) => {
+        const [minx, miny, maxx, maxy] = it.bbox;
+        const coords = [[minx, maxy], [maxx, maxy], [maxx, miny], [minx, miny]];
+        const id = planetLayerIds[i];
+        planetMap.addSource(id, { type: "image", url: urls[i], coordinates: coords });
+        planetMap.addLayer({ id, type: "raster", source: id }, planetMap.getLayer("planet-river-line") ? "planet-river-line" : undefined);
+      });
+      loading.style.display = "none";
+    });
+
+    if (!planetMap.getSource("planet-hot")) {
+      planetMap.addSource("planet-hot", { type: "vector", url: "pmtiles://" + HOT_PMTILES_URL });
+      planetMap.addLayer({
+        id: "planet-river-line", type: "line", source: "planet-hot", "source-layer": "hot_flood_npl",
+        filter: ["all", ["==", ["get", "category"], "waterways"], ["==", ["geometry-type"], "LineString"]],
+        paint: { "line-color": "#00E5FF", "line-width": 1.4, "line-opacity": 0.9 },
+      });
+      planetMap.addSource("planet-aoi", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      planetMap.addLayer({ id: "planet-aoi-line", type: "line", source: "planet-aoi", paint: { "line-color": cssVar("--select"), "line-width": 2.5 } });
+      loadAoiGeojsonOnce().then((geojson) => { if (geojson) planetMap.getSource("planet-aoi").setData(geojson); });
+    }
+    if (!planetFitted) {
+      planetMap.fitBounds(AOI_BBOX, { padding: 24, duration: 0 });
+      planetFitted = true;
+    }
+  };
+  if (planetMap.isStyleLoaded()) ready();
+  else planetMap.once("load", ready);
+
+  document.getElementById("planetCaption").innerHTML =
+    (phase === "pre"
+      ? "PlanetScope pre-event mosaic (27 May 2026, pre-monsoon baseline, 5 scenes) — terrain context, not post-event evidence."
+      : "PlanetScope post-event mosaic (26 Aug 2026, 5 scenes) — 62–93% cloud cover; transparent gaps are cloud/nodata, " +
+        "not flood water. This near-total cloud cover is exactly why this project's flood-extent detection uses SAR.") +
+    " Cyan traces the mapped river channel, outline shows the HOT AOI boundary. Courtesy " +
+    '<a href="' + PLANET_CATALOG_URL + '" target="_blank" rel="noopener">Planet Labs PBC / Planet Crisis Response Program</a>, CC-BY-NC-4.0.';
+}
+document.getElementById("planetPreBtn").addEventListener("click", () => showPlanetPhase("pre"));
+document.getElementById("planetPostBtn").addEventListener("click", () => showPlanetPhase("post"));
 
 // ==================== FLOOD EXTENT ====================
 
@@ -742,8 +826,8 @@ function planetCard() {
     "</div>" +
     '<div style="font-size:.8rem; color:var(--text-dim); margin:8px 0 12px; line-height:1.45;">' +
       "Planet published a dedicated STAC catalog for this event: 5 pre-event scenes (27 May 2026, pre-monsoon " +
-      "baseline, shown in the SAR panel's “Planet” tab) and 9 post-event scenes (26 Aug 2026) -- though the " +
-      "post-event imagery is 62–93% cloud-obscured, which is itself why this project relies on radar. Its own " +
+      "baseline) and 9 post-event scenes (26 Aug 2026), both mosaicked in the Planet imagery section below -- " +
+      "though the post-event imagery is 62–93% cloud-obscured, which is itself why this project relies on radar. Its own " +
       "catalog description cites an ice/rock avalanche from an upper-catchment glacier as the preliminary trigger, " +
       "with the cause still under investigation and casualty figures still provisional at time of release." +
     "</div>" +
@@ -771,3 +855,4 @@ loadGauges();
 loadSar();
 loadConfirmations();
 checkFloodExtent();
+showPlanetPhase("pre");
