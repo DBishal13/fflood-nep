@@ -43,11 +43,11 @@
         "aoi_number": 3,
         "product_type": "GRA",
         "status": "W",
-        "expected_delivery": null,
+        "expected_delivery": "2026-08-28T17:01:00",
         "delivery_time": null,
         "download_path": null,
         "sensors": [
-          null
+          "Legion"
         ]
       },
       {
@@ -55,11 +55,11 @@
         "aoi_number": 4,
         "product_type": "GRA",
         "status": "W",
-        "expected_delivery": null,
+        "expected_delivery": "2026-08-28T17:01:00",
         "delivery_time": null,
         "download_path": null,
         "sensors": [
-          null
+          "Legion"
         ]
       }
     ]

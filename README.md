@@ -35,6 +35,8 @@ If no post-event Sentinel-1 scene exists yet for the corridor (likely for the fi
 
 It also embeds a snapshot of the Copernicus EMS Rapid Mapping activation for this event (EMSR927, `--no-ems` to skip) — a real, independent EU-authorised activation, not something this project runs itself. Its own products may not be delivered yet; check each row's `status`/`expected_delivery`. Refresh just this snapshot with `fflood-nep ems --output docs/data/ems_activation.json` (its API isn't CORS-open, so the web UI reads that committed file rather than fetching it live).
 
+Once a product is actually delivered (a real `download_path`), the same `fflood-nep ems` run also downloads it, extracts its damage-grading vector layers (buildings/facilities/transportation, photo-interpreted, graded Destroyed/Damaged/Possibly damaged/No visible damage), and writes them merged into `docs/data/ems_damage.geojson` (`--no-damage` to skip, `--damage-output` to redirect). The web map picks this up automatically as a toggleable "EMS damage grading" layer, colored by grade, clickable for the full per-feature assessment — no code change needed once new AOIs deliver.
+
 ### InSAR coherence (separate from `detect`)
 
 `detect`'s SAR pipeline uses amplitude/backscatter (RTC/GRD) to map flood *extent*. It cannot say anything about *deformation* at the avalanche/landslide source, because RTC/GRD products discard phase. `fflood-nep insar` is a separate pipeline for that:

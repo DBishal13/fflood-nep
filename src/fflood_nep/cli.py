@@ -29,6 +29,11 @@ def main() -> None:
         "ems", help="fetch the Copernicus EMS Rapid Mapping activation snapshot for this event (EMSR927)"
     )
     ems_parser.add_argument("--output", type=Path, default=Path("docs/data/ems_activation.json"))
+    ems_parser.add_argument(
+        "--damage-output", type=Path, default=Path("docs/data/ems_damage.geojson"),
+        help="where to write the merged damage-grading layers extracted from any delivered product ZIPs",
+    )
+    ems_parser.add_argument("--no-damage", action="store_true", help="skip downloading/extracting delivered product ZIPs")
 
     timeline_parser = subparsers.add_parser("timeline", help="manage the public event timeline")
     timeline_sub = timeline_parser.add_subparsers(dest="timeline_command", required=True)
@@ -88,6 +93,16 @@ def main() -> None:
             print(f"Wrote {args.output} ({payload['activation']['code']}, {len(payload['activation']['products'])} product rows)")
         else:
             print(f"Wrote {args.output} (no activation data available)")
+
+        if activation and not args.no_damage:
+            delivered = [p for p in payload["activation"]["products"] if p["download_path"]]
+            if delivered:
+                damage = ems.merge_damage_layers(delivered)
+                args.damage_output.parent.mkdir(parents=True, exist_ok=True)
+                args.damage_output.write_text(json.dumps(damage, indent=2) + "\n", encoding="utf-8")
+                print(f"Wrote {args.damage_output} ({len(damage['features'])} features from {damage['aois_included']})")
+            else:
+                print("No delivered products yet -- skipped damage layer extraction")
     elif args.command == "timeline" and args.timeline_command == "add":
         from . import timeline
 

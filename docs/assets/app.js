@@ -76,6 +76,23 @@ const cs = getComputedStyle(document.documentElement);
 const cssVar = (name) => cs.getPropertyValue(name).trim();
 const catColor = (key) => cssVar("--cat-" + key) || cssVar("--text-dim");
 
+// Copernicus EMS damage-grading vocabulary -> this project's semantic color tokens (danger/warn
+// already exist for other things; --dmg-possible/--dmg-none are dedicated to this feature).
+const emsDamageColor = (grade) => ({
+  "Destroyed": cssVar("--danger"),
+  "Damaged": cssVar("--warn"),
+  "Possibly damaged": cssVar("--dmg-possible"),
+  "No visible damage": cssVar("--dmg-none"),
+}[grade] || cssVar("--dmg-none"));
+const EMS_DAMAGE_COLOR_EXPR = [
+  "match", ["get", "damage_gra"],
+  "Destroyed", cssVar("--danger"),
+  "Damaged", cssVar("--warn"),
+  "Possibly damaged", cssVar("--dmg-possible"),
+  "No visible damage", cssVar("--dmg-none"),
+  cssVar("--dmg-none"),
+];
+
 const liveStatusEl = document.getElementById("liveStatus");
 const statusParts = { map: "loading", gauges: "loading", sar: "loading" };
 function updateLiveStatus() {
@@ -212,6 +229,67 @@ function buildLegend() {
     aoiItem.classList.toggle("off", !aoiCheckbox.checked);
   });
   legendList.appendChild(aoiItem);
+
+  const emsItem = document.createElement("label");
+  emsItem.className = "legend-item";
+  emsItem.id = "emsDamageLegendItem";
+  emsItem.style.display = "none"; // shown once data actually loads -- see checkEmsDamage()
+  emsItem.title = "Copernicus EMS damage grading: red=Destroyed, orange=Damaged, yellow=Possibly damaged, gray=No visible damage";
+  emsItem.innerHTML =
+    '<input type="checkbox" id="emsDamageToggle" checked>' +
+    '<span class="legend-swatch" style="background:var(--danger);"></span>' +
+    "<span>EMS damage grading</span>" +
+    '<span class="legend-count"></span>';
+  const emsCheckbox = emsItem.querySelector("input");
+  emsCheckbox.addEventListener("change", () => {
+    const vis = emsCheckbox.checked ? "visible" : "none";
+    EMS_DAMAGE_LAYER_IDS.forEach((id) => { if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", vis); });
+    emsItem.classList.toggle("off", !emsCheckbox.checked);
+  });
+  legendList.appendChild(emsItem);
+}
+
+const EMS_DAMAGE_LAYER_IDS = ["ems-damage-fill", "ems-damage-outline", "ems-damage-line", "ems-damage-circle"];
+let lastEmsDamageGeojson = null;
+
+// Copernicus EMS's delivered damage-grading products (buildings/facilities/transportation, photo-
+// interpreted) -- see ems.merge_damage_layers() server-side. Mixed geometry in one source, same
+// pattern as the HOT layer, colored by damage_gra instead of a fixed category color.
+function addEmsDamageLayer(geojson) {
+  lastEmsDamageGeojson = geojson;
+  if (map.getSource("ems-damage")) { map.getSource("ems-damage").setData(geojson); return; }
+
+  map.addSource("ems-damage", { type: "geojson", data: geojson });
+  const isPoly = ["==", ["geometry-type"], "Polygon"];
+  const isLine = ["in", ["geometry-type"], ["literal", ["LineString", "MultiLineString"]]];
+  const isPoint = ["==", ["geometry-type"], "Point"];
+
+  map.addLayer({ id: "ems-damage-fill", type: "fill", source: "ems-damage", filter: isPoly, paint: { "fill-color": EMS_DAMAGE_COLOR_EXPR, "fill-opacity": 0.35 } });
+  map.addLayer({ id: "ems-damage-outline", type: "line", source: "ems-damage", filter: isPoly, paint: { "line-color": EMS_DAMAGE_COLOR_EXPR, "line-width": 1.5 } });
+  map.addLayer({ id: "ems-damage-line", type: "line", source: "ems-damage", filter: isLine, paint: { "line-color": EMS_DAMAGE_COLOR_EXPR, "line-width": 3 } });
+  map.addLayer({
+    id: "ems-damage-circle", type: "circle", source: "ems-damage", filter: isPoint,
+    paint: { "circle-color": EMS_DAMAGE_COLOR_EXPR, "circle-radius": 4, "circle-stroke-width": 1, "circle-stroke-color": cssVar("--surface") },
+  });
+  interactiveLayerIds.push("ems-damage-fill", "ems-damage-line", "ems-damage-circle");
+
+  const legendItem = document.getElementById("emsDamageLegendItem");
+  legendItem.style.display = "";
+  if (!document.getElementById("emsDamageToggle").checked) {
+    EMS_DAMAGE_LAYER_IDS.forEach((id) => map.setLayoutProperty(id, "visibility", "none"));
+  }
+}
+
+function checkEmsDamage() {
+  fetch("data/ems_damage.geojson")
+    .then((r) => (r.ok ? r.json() : null))
+    .then((geojson) => {
+      if (geojson && geojson.features && geojson.features.length) {
+        if (map.loaded()) addEmsDamageLayer(geojson);
+        else map.on("load", () => addEmsDamageLayer(geojson));
+      }
+    })
+    .catch(() => {});
 }
 buildLegend();
 
@@ -250,6 +328,7 @@ function setupMapLayers() {
   if (lastSelectedFeature) map.getSource("selected").setData({ type: "FeatureCollection", features: [lastSelectedFeature] });
 
   if (lastFloodExtentGeojson) addFloodExtentLayer(lastFloodExtentGeojson);
+  if (lastEmsDamageGeojson) addEmsDamageLayer(lastEmsDamageGeojson);
 }
 
 function restyleMap() {
@@ -312,6 +391,24 @@ function selectFeature(feature) {
   map.getSource("selected").setData({ type: "FeatureCollection", features: [feature] });
 
   const p = feature.properties || {};
+
+  if (p.ems_layer) {
+    const rows = [
+      ["Damage grade", '<span class="inspector-cat-badge"><span class="inspector-cat-dot" style="background:' + emsDamageColor(p.damage_gra) + ';"></span>' + (p.damage_gra || "Unknown") + "</span>"],
+      ["Type", p.simplified || p.obj_type || "—"],
+      ["Name", p.name && p.name !== "Unknown" ? p.name : "—"],
+      ["AOI", p.aoi_name || "—"],
+      ["Detection", p.det_method || "—"],
+      ["Geometry", feature.geometry.type],
+    ];
+    document.getElementById("inspector").innerHTML =
+      '<dl style="margin:0;">' +
+      rows.map(([k, v]) => '<div class="inspector-row"><dt>' + k + "</dt><dd>" + v + "</dd></div>").join("") +
+      "</dl>" +
+      '<p style="font-size:.72rem; color:var(--text-faint); margin-top:10px; line-height:1.4;">Copernicus EMS damage grading — photo-interpreted from post-event imagery, not a ground survey.</p>';
+    return;
+  }
+
   const cat = CATEGORIES.find((c) => c.key === p.category);
   const label = cat ? cat.label : (p.category || "Unknown");
   const rows = [
@@ -1166,4 +1263,5 @@ loadSar();
 loadConfirmations();
 loadTimeline();
 checkFloodExtent();
+checkEmsDamage();
 showPlanetPhase("pre");

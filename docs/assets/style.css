@@ -16,6 +16,8 @@
   --warn-soft: rgba(156, 99, 23, .14);
   --danger: #B23A31;
   --danger-soft: rgba(178, 58, 49, .13);
+  --dmg-possible: #C9A227;
+  --dmg-none: #7A8570;
   --shadow: 0 1px 2px rgba(28, 23, 16, .06), 0 8px 24px -12px rgba(28, 23, 16, .18);
 
   /* map categories -- extends the same palette, not a separate one */
@@ -51,6 +53,8 @@
     --warn-soft: rgba(227, 168, 59, .14);
     --danger: #E37568;
     --danger-soft: rgba(227, 117, 104, .16);
+    --dmg-possible: #F0D060;
+    --dmg-none: #9AA68C;
     --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 12px 32px -14px rgba(0, 0, 0, .6);
 
     --cat-buildings: #B8AF97;
@@ -85,6 +89,8 @@
   --warn-soft: rgba(227, 168, 59, .14);
   --danger: #E37568;
   --danger-soft: rgba(227, 117, 104, .16);
+  --dmg-possible: #F0D060;
+  --dmg-none: #9AA68C;
   --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 12px 32px -14px rgba(0, 0, 0, .6);
 
   --cat-buildings: #B8AF97;
