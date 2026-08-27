@@ -1,6 +1,23 @@
 {
   "entries": [
     {
+      "date": "2026-08-27T08:00:00Z",
+      "category": "cause",
+      "headline": "Cause investigation reverses a key assumption; rainfall explicitly ruled out",
+      "body": "Earlier reporting framed the M4.4 earthquake as the likely trigger for the avalanche/landslide that blocked the Lhende Khola. Scientists are now investigating the causality in the other direction too -- whether the avalanche itself was large enough to generate the seismic signal initially attributed to an independent earthquake, rather than the earthquake causing the avalanche. Separately, Nepal's Department of Hydrology and Meteorology has ruled out heavy rainfall in the Rasuwa area on the two days around the event, and authorities say there remains no confirmed evidence of a glacial lake actually bursting (the GLOF hypothesis). Net effect: the cause is less settled than a simple 'earthquake triggered avalanche' narrative implied, not more.",
+      "sources": [
+        {
+          "label": "Review Nepal",
+          "url": "https://www.reviewnepal.com/rasuwa-flood-experts-search-for-the-cause-as-himalayan-glacial-risks-grow/"
+        },
+        {
+          "label": "Outlook India",
+          "url": "https://www.outlookindia.com/international/nepal-floods-what-triggered-the-sudden-bhotekoshi-river-surge-heres-what-reports-say"
+        }
+      ],
+      "logged_at": "2026-08-27T08:42:10Z"
+    },
+    {
       "date": "2026-08-27T06:00:00Z",
       "category": "recovery",
       "headline": "Scale of infrastructure damage detailed; this is the second such event on this river in 14 months",
