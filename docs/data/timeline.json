@@ -1,6 +1,23 @@
 {
   "entries": [
     {
+      "date": "2026-08-27T14:54:00Z",
+      "category": "casualty",
+      "headline": "NDRRMA's official figures: 165 bodies recovered, 823 out of contact",
+      "body": "Nepal's National Disaster Risk Reduction and Management Authority (NDRRMA) -- the government's own disaster authority, a more authoritative source than aggregated news reporting -- puts the toll at 165 bodies recovered and 823 people out of contact as of 27 Aug 2026, 14:54 NPT. NDRRMA also reports 113 people rescued from Timure, Dhunche, Syabrubesi, Uttargaya and Bidur (88 Nepali, 11 Indian, 8 Chinese, 4 Korean, 2 American), and puts damaged hydropower projects at 14 (vs. 6 named facilities in earlier reporting). Notably, NDRRMA's own cause statement cites Planet Labs' satellite analysis as the basis for the snow-rock-landslide hypothesis -- the same Planet catalog already integrated into this project. Cross-confirmed independently by NESRA FloodWatch, a third-party situational-awareness tracker for this event.",
+      "sources": [
+        {
+          "label": "NDRRMA (via DPNet Nepal)",
+          "url": "https://www.dpnet.org.np/resource-detail/2197"
+        },
+        {
+          "label": "NESRA FloodWatch",
+          "url": "https://nesraspace.org/floodwatch/rasuwa-2026/"
+        }
+      ],
+      "logged_at": "2026-08-27T14:52:57Z"
+    },
+    {
       "date": "2026-08-27T13:00:00Z",
       "category": "other",
       "headline": "ICIMOD warns a second flood is possible: landslide debris still blocking the river upstream",

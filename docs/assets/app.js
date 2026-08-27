@@ -923,6 +923,9 @@ function addFloodExtentLayer(geojson) {
 
 // ==================== INDEPENDENT CONFIRMATION ====================
 
+// EMS Rapid Mapping status codes (undocumented publicly, inferred from observed API responses).
+const EMS_STATUS_LABELS = { W: "Waiting", I: "In production", D: "Delivered" };
+
 function fmtUtc(iso) {
   if (!iso) return "unknown";
   const d = new Date(iso.endsWith("Z") ? iso : iso + "Z");
@@ -968,8 +971,9 @@ function emsCard(snapshot) {
   const a = snapshot.activation;
   const delivered = a.products.some((p) => p.download_path);
   const statusChip = delivered ? '<span class="chip chip-ok">Products delivered</span>' : '<span class="chip chip-warn">Awaiting delivery</span>';
+  const statusLabel = (p) => p.download_path ? "Delivered" : (EMS_STATUS_LABELS[p.status] || p.status || "Unknown");
   const rows = a.products
-    .map((p) => "<dt>" + p.aoi_name + "</dt><dd class=\"mono\">" + (p.sensors || []).join("/") + " · " + (p.download_path ? "Delivered" : "Waiting") + " · exp. " + fmtUtc(p.expected_delivery) + "</dd>")
+    .map((p) => "<dt>" + p.aoi_name + "</dt><dd class=\"mono\">" + (p.sensors || []).join("/") + " · " + statusLabel(p) + " · exp. " + fmtUtc(p.expected_delivery) + "</dd>")
     .join("");
   card.innerHTML =
     '<div class="gcard-top">' +
@@ -1015,11 +1019,36 @@ function planetCard() {
   return card;
 }
 
+function nesraCard() {
+  const card = document.createElement("div");
+  card.className = "gcard";
+  card.innerHTML =
+    '<div class="gcard-top">' +
+      '<div>' +
+        '<div class="gcard-name">NESRA FloodWatch</div>' +
+        '<div class="gcard-district">Third-party situational-awareness tracker</div>' +
+      "</div>" +
+      '<span class="chip chip-ok">Independently cross-checks NDRRMA</span>' +
+    "</div>" +
+    '<div style="font-size:.8rem; color:var(--text-dim); margin:8px 0 12px; line-height:1.45;">' +
+      "A separate, actively-updated tracker for this exact event, aggregating Nepal's own NDRRMA situation " +
+      "reports, DHM River Watch, Planet's catalog, and Copernicus EMSR927 into one page. Useful as an " +
+      "independent check on the casualty and infrastructure figures logged in the timeline below -- " +
+      "explicitly for situational awareness only, not an official warning source." +
+    "</div>" +
+    '<div class="gcard-foot">' +
+      "<span>Cited 27 Aug 2026</span>" +
+      '<a href="https://nesraspace.org/floodwatch/rasuwa-2026/" target="_blank" rel="noopener">NESRA FloodWatch →</a>' +
+    "</div>";
+  return card;
+}
+
 function loadConfirmations() {
   const grid = document.getElementById("confirmationGrid");
   grid.innerHTML = "";
   grid.appendChild(nrscCard());
   grid.appendChild(planetCard());
+  grid.appendChild(nesraCard());
   fetch("data/ems_activation.json")
     .then((r) => (r.ok ? r.json() : null))
     .catch(() => null)
