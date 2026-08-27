@@ -30,12 +30,12 @@
         "aoi_name": "Timure",
         "aoi_number": 2,
         "product_type": "GRA",
-        "status": "W",
-        "expected_delivery": "2026-08-27T18:05:00",
+        "status": "I",
+        "expected_delivery": "2026-08-27T18:55:00",
         "delivery_time": null,
         "download_path": null,
         "sensors": [
-          "WorldView-3"
+          "Legion"
         ]
       }
     ]

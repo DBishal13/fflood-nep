@@ -1,6 +1,23 @@
 {
   "entries": [
     {
+      "date": "2026-08-27T11:00:00Z",
+      "category": "casualty",
+      "headline": "Rescue operations underway; missing-person tallies vary widely by scope",
+      "body": "Nepal Army has rescued at least 123 people by helicopter (95 from Timure, 7 evacuated from a hydropower project tunnel in Haku, 21 Indian tourists among them); Nepal Tourism Board separately reports 27 tourists rescued (2 US, 11 Indian, 4 South Korean, 2 Italian nationals). More than 160 bodies have now been recovered nationally. Missing-person tallies vary sharply depending on scope: one tally counts 403 unaccounted travellers (341 foreign, 62 Nepali), while a broader figure cites 1,300+ missing across Nepal and China combined -- the discrepancy likely reflects tourists-only vs. all-persons-missing (including the security personnel and hydropower workers already logged). Treat any single missing-count figure as provisional and scope-dependent.",
+      "sources": [
+        {
+          "label": "Business Today",
+          "url": "https://www.businesstoday.in/world/story/nepal-flash-floods-21-indian-tourists-rescued-so-far-over-160-bodies-recovered-top-developments-551652-2026-08-27"
+        },
+        {
+          "label": "CBS News",
+          "url": "https://www.cbsnews.com/news/nepal-flash-flood-tourists-missing-including-americans/"
+        }
+      ],
+      "logged_at": "2026-08-27T12:42:14Z"
+    },
+    {
       "date": "2026-08-27T10:00:00Z",
       "category": "recovery",
       "headline": "Infrastructure damage figures refined: 19 bridges, ~430MW hydropower capacity",
