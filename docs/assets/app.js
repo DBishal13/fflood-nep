@@ -36,6 +36,13 @@ const PLANET_POST_ITEMS = [
   { id: "20260826_050133_00_255f", bbox: [84.929006, 27.976294, 85.310602, 28.218324] },
   { id: "20260826_050135_34_255f", bbox: [84.894307, 27.829256, 85.275845, 28.071583] },
 ].map((it) => ({ ...it, thumb: planetThumbUrl("post-event/2026-08-26", it.id) }));
+// SkySat: 0.8m post-event, two focal collects over Rasuwagadhi and Syabrubesi (27 Aug 2026) --
+// far sharper than the 3.8m PlanetScope scenes, but covers only these two small areas, not the
+// whole corridor.
+const PLANET_SKYSAT_ITEMS = [
+  { id: "20260827_020055_ssc1_u0001", bbox: [85.312113, 28.153141, 85.442798, 28.366091] },
+  { id: "20260827_020055_ssc1_u0002", bbox: [85.278669, 28.082206, 85.374289, 28.210064] },
+].map((it) => ({ ...it, thumb: planetThumbUrl("post-event/2026-08-27", it.id) }));
 
 const CATEGORIES = [
   { key: "buildings", label: "Buildings" },
@@ -825,17 +832,41 @@ let planetPhase = "pre";
 let planetLayerIds = [];
 let planetFitted = false;
 
+const PLANET_PHASES = {
+  pre: {
+    items: PLANET_PRE_ITEMS, legend: "27 May 2026 · 3.8m",
+    caption: "PlanetScope pre-event mosaic (27 May 2026, pre-monsoon baseline, 5 scenes) — terrain context, not post-event evidence.",
+  },
+  post: {
+    items: PLANET_POST_ITEMS, legend: "26 Aug 2026 · 3.8m · heavy cloud",
+    caption: "PlanetScope post-event mosaic (26 Aug 2026, 5 scenes) — 62–93% cloud cover; transparent gaps are cloud/nodata, " +
+      "not flood water. This near-total cloud cover is exactly why this project's flood-extent detection uses SAR.",
+  },
+  skysat: {
+    items: PLANET_SKYSAT_ITEMS, legend: "27 Aug 2026 · 0.8m · 2 focal collects",
+    caption: "SkySat post-event, high-resolution (27 Aug 2026, 0.8m -- about 5x sharper than the PlanetScope scenes above). " +
+      "Only two focal collects, over Rasuwagadhi and Syabrubesi specifically, not the whole corridor -- ~50% cloud, clear " +
+      "fraction near 8%, so most of what's visible is sharp where it shows through at all.",
+  },
+};
+
+function planetItemsBounds(items) {
+  const xs = items.flatMap((it) => [it.bbox[0], it.bbox[2]]);
+  const ys = items.flatMap((it) => [it.bbox[1], it.bbox[3]]);
+  return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+}
+
 async function showPlanetPhase(phase) {
   planetPhase = phase;
   document.getElementById("planetPreBtn").classList.toggle("active", phase === "pre");
   document.getElementById("planetPostBtn").classList.toggle("active", phase === "post");
+  document.getElementById("planetSkysatBtn").classList.toggle("active", phase === "skysat");
 
   const loading = document.getElementById("planetLoading");
   loading.style.display = "flex";
 
-  const items = phase === "pre" ? PLANET_PRE_ITEMS : PLANET_POST_ITEMS;
-  const legend = document.getElementById("planetLegend");
-  legend.textContent = phase === "pre" ? "27 May 2026 · 3.8m" : "26 Aug 2026 · 3.8m · heavy cloud";
+  const { items, legend: legendText, caption } = PLANET_PHASES[phase];
+  document.getElementById("planetLegend").textContent = legendText;
 
   const ready = () => {
     // remove the previous phase's layers/sources before adding the new phase's
@@ -850,7 +881,10 @@ async function showPlanetPhase(phase) {
       addCorridorRiverLayers(planetMap, "planet");
       applyCorridorRiverToggles(planetMap, "planet", "planetCorridorToggle", "planetRiverToggle");
     }
-    if (!planetFitted) {
+    if (phase === "skysat") {
+      // SkySat covers two small focal areas, not the whole corridor -- zoom to where the detail actually is.
+      planetMap.fitBounds(planetItemsBounds(items), { padding: 24, duration: 400 });
+    } else if (!planetFitted) {
       planetMap.fitBounds(AOI_BBOX, { padding: 24, duration: 0 });
       planetFitted = true;
     }
@@ -859,15 +893,12 @@ async function showPlanetPhase(phase) {
   else planetMap.once("load", ready);
 
   document.getElementById("planetCaption").innerHTML =
-    (phase === "pre"
-      ? "PlanetScope pre-event mosaic (27 May 2026, pre-monsoon baseline, 5 scenes) — terrain context, not post-event evidence."
-      : "PlanetScope post-event mosaic (26 Aug 2026, 5 scenes) — 62–93% cloud cover; transparent gaps are cloud/nodata, " +
-        "not flood water. This near-total cloud cover is exactly why this project's flood-extent detection uses SAR.") +
-    " Cyan traces the mapped river channel, outline shows the HOT AOI boundary. Courtesy " +
+    caption + " Cyan traces the mapped river channel, outline shows the HOT AOI boundary. Courtesy " +
     '<a href="' + PLANET_CATALOG_URL + '" target="_blank" rel="noopener">Planet Labs PBC / Planet Crisis Response Program</a>, CC-BY-NC-4.0.';
 }
 document.getElementById("planetPreBtn").addEventListener("click", () => showPlanetPhase("pre"));
 document.getElementById("planetPostBtn").addEventListener("click", () => showPlanetPhase("post"));
+document.getElementById("planetSkysatBtn").addEventListener("click", () => showPlanetPhase("skysat"));
 
 // ---- Planet corridor/river toggles + pre/post swipe compare ----
 
