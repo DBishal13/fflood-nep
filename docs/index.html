@@ -20,7 +20,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders:wght@500;600;700;800&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
 <link href="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.css" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=20260827b">
+<link rel="stylesheet" href="assets/style.css?v=20260827c">
 </head>
 <body>
 
@@ -92,11 +92,16 @@
               <button id="sarLayerBtn" class="active">SAR</button>
               <button id="landcoverLayerBtn">Land cover</button>
             </div>
+            <button class="map-reset" id="sarCompareBtn" disabled title="Available once a post-event pass exists">Compare ⇄</button>
           </div>
           <div style="display:flex; align-items:center; gap:12px;">
             <span class="mono" id="sarLegend" style="font-size:.72rem; color:var(--text-faint);">VV+VH · 10m · sentinel-1-rtc</span>
             <button class="map-reset" id="sarReset">Recenter</button>
           </div>
+        </div>
+        <div class="radar-toolbar radar-toolbar-secondary">
+          <label class="mini-toggle"><input type="checkbox" id="sarCorridorToggle" checked> Corridor</label>
+          <label class="mini-toggle"><input type="checkbox" id="sarRiverToggle" checked> River</label>
         </div>
         <div class="radar-frame" id="radarFrame">
           <div id="sarMap" class="sar-map"></div>
@@ -130,14 +135,21 @@
     <div class="sar-shell">
       <div class="radar-card">
         <div class="radar-toolbar">
-          <div class="seg">
-            <button id="planetPreBtn" class="active">Pre-event</button>
-            <button id="planetPostBtn">Post-event</button>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <div class="seg">
+              <button id="planetPreBtn" class="active">Pre-event</button>
+              <button id="planetPostBtn">Post-event</button>
+            </div>
+            <button class="map-reset" id="planetCompareBtn">Compare ⇄</button>
           </div>
           <div style="display:flex; align-items:center; gap:12px;">
             <span class="mono" id="planetLegend" style="font-size:.72rem; color:var(--text-faint);">27 May 2026 · 3.8m</span>
             <button class="map-reset" id="planetReset">Recenter</button>
           </div>
+        </div>
+        <div class="radar-toolbar radar-toolbar-secondary">
+          <label class="mini-toggle"><input type="checkbox" id="planetCorridorToggle" checked> Corridor</label>
+          <label class="mini-toggle"><input type="checkbox" id="planetRiverToggle" checked> River</label>
         </div>
         <div class="radar-frame" id="planetFrame">
           <div id="planetMap" class="sar-map"></div>
@@ -227,6 +239,6 @@
 
 <script src="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3/dist/pmtiles.js"></script>
-<script src="assets/app.js?v=20260827f"></script>
+<script src="assets/app.js?v=20260827g"></script>
 </body>
 </html>

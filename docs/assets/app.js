@@ -162,6 +162,7 @@ function buildLegend() {
     const ids = ["fill-" + cat.key, "line-" + cat.key, "circle-" + cat.key];
     const item = document.createElement("label");
     item.className = "legend-item";
+    item.dataset.cat = cat.key;
     item.innerHTML =
       '<input type="checkbox" checked>' +
       '<span class="legend-swatch" style="background:var(--cat-' + cat.key + ');"></span>' +
@@ -175,17 +176,36 @@ function buildLegend() {
     });
     legendList.appendChild(item);
   });
+
+  const aoiItem = document.createElement("label");
+  aoiItem.className = "legend-item";
+  aoiItem.innerHTML =
+    '<input type="checkbox" id="aoiToggle" checked>' +
+    '<span class="legend-swatch" style="background:var(--text-dim);"></span>' +
+    "<span>AOI boundary</span>" +
+    '<span class="legend-count"></span>';
+  const aoiCheckbox = aoiItem.querySelector("input");
+  aoiCheckbox.addEventListener("change", () => {
+    const vis = aoiCheckbox.checked ? "visible" : "none";
+    ["aoi-fill", "aoi-line"].forEach((id) => { if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", vis); });
+    aoiItem.classList.toggle("off", !aoiCheckbox.checked);
+  });
+  legendList.appendChild(aoiItem);
 }
 buildLegend();
 
 function applyLegendVisibility() {
-  document.querySelectorAll("#legendList .legend-item").forEach((item, i) => {
+  document.querySelectorAll("#legendList .legend-item[data-cat]").forEach((item) => {
     if (item.querySelector("input").checked) return;
-    const cat = CATEGORIES[i];
-    ["fill-" + cat.key, "line-" + cat.key, "circle-" + cat.key].forEach((id) => {
+    const cat = item.dataset.cat;
+    ["fill-" + cat, "line-" + cat, "circle-" + cat].forEach((id) => {
       if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", "none");
     });
   });
+  const aoiCheckbox = document.getElementById("aoiToggle");
+  if (aoiCheckbox && !aoiCheckbox.checked) {
+    ["aoi-fill", "aoi-line"].forEach((id) => { if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", "none"); });
+  }
 }
 
 // (Re-)adds every data-driven source/layer, restoring selection/AOI/flood-extent state. Called on
@@ -522,24 +542,112 @@ function worldcoverPreviewUrl() {
   return worldcoverPreviewPromise;
 }
 
-function ensureSarLayers(url, coords) {
-  sarMap.addSource("sar-image", { type: "image", url, coordinates: coords });
-  sarMap.addLayer({ id: "sar-image-layer", type: "raster", source: "sar-image" });
-
-  // The actual mapped river channel (HOT/OSM waterways), distinct from the AOI corridor buffer.
-  sarMap.addSource("sar-hot", { type: "vector", url: "pmtiles://" + HOT_PMTILES_URL });
-  sarMap.addLayer({
-    id: "sar-river-line", type: "line", source: "sar-hot", "source-layer": "hot_flood_npl",
+// Shared by sarMap/planetMap and by each panel's swipe "back" map: the actual mapped river
+// channel (HOT/OSM waterways) and the AOI corridor outline, both toggleable from the toolbar.
+function addCorridorRiverLayers(targetMap, prefix) {
+  targetMap.addSource(prefix + "-hot", { type: "vector", url: "pmtiles://" + HOT_PMTILES_URL });
+  targetMap.addLayer({
+    id: prefix + "-river-line", type: "line", source: prefix + "-hot", "source-layer": "hot_flood_npl",
     filter: ["all", ["==", ["get", "category"], "waterways"], ["==", ["geometry-type"], "LineString"]],
     paint: { "line-color": "#00E5FF", "line-width": 1.4, "line-opacity": 0.9 },
   });
-
-  sarMap.addSource("sar-aoi", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-  sarMap.addLayer({
-    id: "sar-aoi-line", type: "line", source: "sar-aoi",
+  targetMap.addSource(prefix + "-aoi", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+  targetMap.addLayer({
+    id: prefix + "-aoi-line", type: "line", source: prefix + "-aoi",
     paint: { "line-color": cssVar("--select"), "line-width": 2.5 },
   });
-  loadAoiGeojsonOnce().then((geojson) => { if (geojson) sarMap.getSource("sar-aoi").setData(geojson); });
+  loadAoiGeojsonOnce().then((geojson) => { if (geojson) targetMap.getSource(prefix + "-aoi").setData(geojson); });
+}
+
+// Applies the panel's current Corridor/River checkbox state to a map that just had those layers
+// added -- new layers default to visible regardless of what the toolbar already says.
+function applyCorridorRiverToggles(targetMap, prefix, corridorCheckboxId, riverCheckboxId) {
+  const corridorOn = document.getElementById(corridorCheckboxId).checked;
+  const riverOn = document.getElementById(riverCheckboxId).checked;
+  if (targetMap.getLayer(prefix + "-aoi-line")) targetMap.setLayoutProperty(prefix + "-aoi-line", "visibility", corridorOn ? "visible" : "none");
+  if (targetMap.getLayer(prefix + "-river-line")) targetMap.setLayoutProperty(prefix + "-river-line", "visibility", riverOn ? "visible" : "none");
+}
+
+function wireCorridorRiverToggle(checkboxId, layerId, getMaps) {
+  document.getElementById(checkboxId).addEventListener("change", (e) => {
+    const vis = e.target.checked ? "visible" : "none";
+    getMaps().forEach((m) => { if (m.getLayer(layerId)) m.setLayoutProperty(layerId, "visibility", vis); });
+  });
+}
+
+const RADAR_BG_STYLE = { version: 8, sources: {}, layers: [{ id: "bg", type: "background", paint: { "background-color": "#0a0805" } }] };
+
+// Generic swipe/compare: MapLibre has no per-layer clipping (one canvas per map), so a real swipe
+// needs the standard two-synced-maps technique (as in mapbox-gl-compare) -- a second "back" map
+// instance, camera-synced to `frontMap`, revealed via a draggable clip-path handle on the front
+// map's own container. `buildBack(backMap)` adds whatever layers represent "the other side".
+function createSwipeCompare(frontMap, containerEl, buildBack) {
+  const backEl = document.createElement("div");
+  backEl.className = "sar-map swipe-back";
+  containerEl.insertBefore(backEl, containerEl.firstChild);
+
+  const backMap = new maplibregl.Map({
+    container: backEl,
+    style: RADAR_BG_STYLE,
+    center: frontMap.getCenter(),
+    zoom: frontMap.getZoom(),
+    attributionControl: false,
+    interactive: false,
+  });
+  backMap.once("load", () => buildBack(backMap));
+
+  let syncing = false;
+  const syncBack = () => {
+    if (syncing) return;
+    syncing = true;
+    backMap.jumpTo({ center: frontMap.getCenter(), zoom: frontMap.getZoom(), bearing: frontMap.getBearing(), pitch: frontMap.getPitch() });
+    syncing = false;
+  };
+  frontMap.on("move", syncBack);
+
+  const handle = document.createElement("div");
+  handle.className = "swipe-handle";
+  handle.innerHTML = '<span class="swipe-handle-grip"></span>';
+  containerEl.appendChild(handle);
+
+  function setPct(pct) {
+    pct = Math.max(2, Math.min(98, pct));
+    handle.style.left = pct + "%";
+    frontMap.getContainer().style.clipPath = "inset(0 " + (100 - pct) + "% 0 0)";
+  }
+  setPct(50);
+
+  let dragging = false;
+  const onDown = (e) => { dragging = true; handle.setPointerCapture(e.pointerId); };
+  const onUp = () => { dragging = false; };
+  const onMove = (e) => {
+    if (!dragging) return;
+    const rect = containerEl.getBoundingClientRect();
+    setPct(((e.clientX - rect.left) / rect.width) * 100);
+  };
+  handle.addEventListener("pointerdown", onDown);
+  window.addEventListener("pointerup", onUp);
+  window.addEventListener("pointermove", onMove);
+
+  return {
+    backMap,
+    destroy() {
+      frontMap.off("move", syncBack);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointermove", onMove);
+      frontMap.getContainer().style.clipPath = "";
+      handle.remove();
+      backEl.remove();
+      backMap.remove();
+    },
+  };
+}
+
+function ensureSarLayers(url, coords) {
+  sarMap.addSource("sar-image", { type: "image", url, coordinates: coords });
+  sarMap.addLayer({ id: "sar-image-layer", type: "raster", source: "sar-image" });
+  addCorridorRiverLayers(sarMap, "sar");
+  applyCorridorRiverToggles(sarMap, "sar", "sarCorridorToggle", "sarRiverToggle");
 }
 
 function applyBaseImage() {
@@ -578,6 +686,8 @@ function setSarBaseMode(mode) {
 document.getElementById("sarLayerBtn").addEventListener("click", () => setSarBaseMode("sar"));
 document.getElementById("landcoverLayerBtn").addEventListener("click", () => setSarBaseMode("landcover"));
 
+let preSarUrl = null, postSarUrl = null;
+
 function showScene(item, label, bbox) {
   const loading = document.getElementById("radarLoading");
   const url = previewUrl(item, bbox, 1024);
@@ -588,6 +698,9 @@ function showScene(item, label, bbox) {
     return;
   }
   loading.style.display = "none";
+
+  if (label === "pre_event") preSarUrl = url; else postSarUrl = url;
+  document.getElementById("sarCompareBtn").disabled = !(preSarUrl && postSarUrl);
 
   currentSarUrl = url;
   sarImageBounds = bbox;
@@ -603,6 +716,41 @@ function showScene(item, label, bbox) {
     "river channel, outline shows the exact HOT AOI boundary · " +
     '<span class="mono">' + item.id + (dt ? " · " + dt : "") + "</span>";
 }
+
+// ---- SAR corridor/river toggles + pre/post swipe compare ----
+
+let sarActiveMaps = [sarMap];
+wireCorridorRiverToggle("sarCorridorToggle", "sar-aoi-line", () => sarActiveMaps);
+wireCorridorRiverToggle("sarRiverToggle", "sar-river-line", () => sarActiveMaps);
+
+let sarSwipe = null;
+document.getElementById("sarCompareBtn").addEventListener("click", () => {
+  const btn = document.getElementById("sarCompareBtn");
+  if (sarSwipe) {
+    sarSwipe.destroy();
+    sarSwipe = null;
+    sarActiveMaps = [sarMap];
+    btn.classList.remove("active");
+    applyBaseImage();
+    return;
+  }
+  if (!preSarUrl || !postSarUrl || !sarImageBounds) return;
+
+  setSarBaseMode("sar"); // comparing land cover pre vs post is meaningless -- it's the same raster both times
+  currentSarUrl = preSarUrl;
+  applyBaseImage();
+
+  const [minx, miny, maxx, maxy] = sarImageBounds;
+  const coords = [[minx, maxy], [maxx, maxy], [maxx, miny], [minx, miny]];
+  sarSwipe = createSwipeCompare(sarMap, document.getElementById("radarFrame"), (backMap) => {
+    backMap.addSource("sar-image", { type: "image", url: postSarUrl, coordinates: coords });
+    backMap.addLayer({ id: "sar-image-layer", type: "raster", source: "sar-image" });
+    addCorridorRiverLayers(backMap, "sar");
+    applyCorridorRiverToggles(backMap, "sar", "sarCorridorToggle", "sarRiverToggle");
+    sarActiveMaps = [sarMap, backMap];
+  });
+  btn.classList.add("active");
+});
 
 // ==================== PLANET IMAGERY (separate panel, separate map) ====================
 
@@ -656,6 +804,23 @@ async function planetThumbTransparent(url) {
   return p;
 }
 
+// Fetches+transparency-processes a set of Planet items and adds them as image layers on
+// `targetMap`, inserted below `beforeId` if it already exists. Returns a promise of the new layer
+// ids. Shared between the main phase toggle and each swipe "back" map's opposite-phase mosaic.
+function buildPlanetMosaic(targetMap, items, idPrefix, beforeId) {
+  return Promise.all(items.map((it) => planetThumbTransparent(it.thumb))).then((urls) => {
+    const ids = items.map((it, i) => {
+      const [minx, miny, maxx, maxy] = it.bbox;
+      const coords = [[minx, maxy], [maxx, maxy], [maxx, miny], [minx, miny]];
+      const id = idPrefix + "-" + i;
+      targetMap.addSource(id, { type: "image", url: urls[i], coordinates: coords });
+      targetMap.addLayer({ id, type: "raster", source: id }, targetMap.getLayer(beforeId) ? beforeId : undefined);
+      return id;
+    });
+    return ids;
+  });
+}
+
 let planetPhase = "pre";
 let planetLayerIds = [];
 let planetFitted = false;
@@ -675,29 +840,15 @@ async function showPlanetPhase(phase) {
   const ready = () => {
     // remove the previous phase's layers/sources before adding the new phase's
     planetLayerIds.forEach((id) => { if (planetMap.getLayer(id)) planetMap.removeLayer(id); if (planetMap.getSource(id)) planetMap.removeSource(id); });
-    planetLayerIds = items.map((_, i) => "planet-" + phase + "-" + i);
 
-    Promise.all(items.map((it) => planetThumbTransparent(it.thumb))).then((urls) => {
-      items.forEach((it, i) => {
-        const [minx, miny, maxx, maxy] = it.bbox;
-        const coords = [[minx, maxy], [maxx, maxy], [maxx, miny], [minx, miny]];
-        const id = planetLayerIds[i];
-        planetMap.addSource(id, { type: "image", url: urls[i], coordinates: coords });
-        planetMap.addLayer({ id, type: "raster", source: id }, planetMap.getLayer("planet-river-line") ? "planet-river-line" : undefined);
-      });
+    buildPlanetMosaic(planetMap, items, "planet-" + phase, "planet-river-line").then((ids) => {
+      planetLayerIds = ids;
       loading.style.display = "none";
     });
 
     if (!planetMap.getSource("planet-hot")) {
-      planetMap.addSource("planet-hot", { type: "vector", url: "pmtiles://" + HOT_PMTILES_URL });
-      planetMap.addLayer({
-        id: "planet-river-line", type: "line", source: "planet-hot", "source-layer": "hot_flood_npl",
-        filter: ["all", ["==", ["get", "category"], "waterways"], ["==", ["geometry-type"], "LineString"]],
-        paint: { "line-color": "#00E5FF", "line-width": 1.4, "line-opacity": 0.9 },
-      });
-      planetMap.addSource("planet-aoi", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-      planetMap.addLayer({ id: "planet-aoi-line", type: "line", source: "planet-aoi", paint: { "line-color": cssVar("--select"), "line-width": 2.5 } });
-      loadAoiGeojsonOnce().then((geojson) => { if (geojson) planetMap.getSource("planet-aoi").setData(geojson); });
+      addCorridorRiverLayers(planetMap, "planet");
+      applyCorridorRiverToggles(planetMap, "planet", "planetCorridorToggle", "planetRiverToggle");
     }
     if (!planetFitted) {
       planetMap.fitBounds(AOI_BBOX, { padding: 24, duration: 0 });
@@ -717,6 +868,32 @@ async function showPlanetPhase(phase) {
 }
 document.getElementById("planetPreBtn").addEventListener("click", () => showPlanetPhase("pre"));
 document.getElementById("planetPostBtn").addEventListener("click", () => showPlanetPhase("post"));
+
+// ---- Planet corridor/river toggles + pre/post swipe compare ----
+
+let planetActiveMaps = [planetMap];
+wireCorridorRiverToggle("planetCorridorToggle", "planet-aoi-line", () => planetActiveMaps);
+wireCorridorRiverToggle("planetRiverToggle", "planet-river-line", () => planetActiveMaps);
+
+let planetSwipe = null;
+document.getElementById("planetCompareBtn").addEventListener("click", () => {
+  const btn = document.getElementById("planetCompareBtn");
+  if (planetSwipe) {
+    planetSwipe.destroy();
+    planetSwipe = null;
+    planetActiveMaps = [planetMap];
+    btn.classList.remove("active");
+    return;
+  }
+  showPlanetPhase("pre"); // compare is always pre (front/left) vs post (back/right)
+  planetSwipe = createSwipeCompare(planetMap, document.getElementById("planetFrame"), (backMap) => {
+    buildPlanetMosaic(backMap, PLANET_POST_ITEMS, "planet-swipe-post", "planet-river-line");
+    addCorridorRiverLayers(backMap, "planet");
+    applyCorridorRiverToggles(backMap, "planet", "planetCorridorToggle", "planetRiverToggle");
+    planetActiveMaps = [planetMap, backMap];
+  });
+  btn.classList.add("active");
+});
 
 // ==================== FLOOD EXTENT ====================
 
