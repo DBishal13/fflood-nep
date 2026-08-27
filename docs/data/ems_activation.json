@@ -18,10 +18,10 @@
         "aoi_name": "Syapru Besi",
         "aoi_number": 1,
         "product_type": "GRA",
-        "status": "I",
+        "status": "F",
         "expected_delivery": "2026-08-27T19:41:00",
-        "delivery_time": null,
-        "download_path": null,
+        "delivery_time": "2026-08-27T19:03:49.982313",
+        "download_path": "https://rapidmapping.emergency.copernicus.eu/backend/EMSR927/AOI01/GRA_PRODUCT/EMSR927_AOI01_GRA_PRODUCT_v1.zip",
         "sensors": [
           "WorldView-3"
         ]

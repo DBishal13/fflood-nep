@@ -1,6 +1,23 @@
 {
   "entries": [
     {
+      "date": "2026-08-27T19:41:00Z",
+      "category": "activation",
+      "headline": "Copernicus EMS delivers its second product: both original AOIs now complete",
+      "body": "Syapru Besi's Grading (GRA) damage-assessment product is now delivered and downloadable, joining Timure's (delivered earlier the same day). Both of EMSR927's original AOIs are now complete; the two newer AOIs added downstream, Bidur and Bharatpur, remain in the Waiting queue with no imagery tasked yet.",
+      "sources": [
+        {
+          "label": "Copernicus EMS product download",
+          "url": "https://rapidmapping.emergency.copernicus.eu/backend/EMSR927/AOI01/GRA_PRODUCT/EMSR927_AOI01_GRA_PRODUCT_v1.zip"
+        },
+        {
+          "label": "Copernicus EMS activation page",
+          "url": "https://mapping.emergency.copernicus.eu/activations/EMSR927/"
+        }
+      ],
+      "logged_at": "2026-08-27T20:07:41Z"
+    },
+    {
       "date": "2026-08-27T17:37:36Z",
       "category": "activation",
       "headline": "Copernicus EMS delivers its first product; activation expands to two more towns",
