@@ -1,6 +1,32 @@
 {
   "entries": [
     {
+      "date": "2026-08-28T12:08:00Z",
+      "category": "other",
+      "headline": "Barrier lake breach outcome: assessed manageable, not catastrophic; rescue operations resume",
+      "body": "Follow-up to the barrier lake breach logged earlier today: the lake overflowed on 28 Aug, prompting a temporary pause in rescue operations amid fears of a fresh deluge. Authorities have since determined the immediate threat was manageable, not a repeat of the original catastrophic surge, and rescue operations have resumed. Downstream monitoring of upstream impoundments continues -- this is a de-escalation from acute crisis, not an all-clear, and NESRA notes ongoing monitoring is still required.",
+      "sources": [
+        {
+          "label": "NESRA FloodWatch",
+          "url": "https://nesraspace.org/floodwatch/rasuwa-2026/"
+        }
+      ],
+      "logged_at": "2026-08-28T12:54:34Z"
+    },
+    {
+      "date": "2026-08-28T09:15:00Z",
+      "category": "casualty",
+      "headline": "Recovered bodies pass 500; missing-count divergence widens sharply between sources",
+      "body": "As of 15:00 NPT 28 Aug: Nepal Police reports 547 recovered bodies, NDRRMA separately reports 538 -- both notably higher than the 469 logged earlier today, continuing this event's pattern of rapid, inconsistent revision. Out-of-contact figures now diverge much more sharply than before: NDRRMA reports 977, while a Police compilation reports 2,381 -- roughly 2.4x higher. NESRA explicitly flags these authority-specific totals 'must not be combined' and require reconciliation; treat any single number with real caution. Also newly reported: 73 injured (NDRRMA), 3,742 total rescued via 78 helicopter flights, and infrastructure damage now specified at ~40km of road and 41 bridges destroyed or damaged (up from the 19 bridges logged earlier) -- 'safe end-to-end passability' along the corridor remains unconfirmed.",
+      "sources": [
+        {
+          "label": "NESRA FloodWatch",
+          "url": "https://nesraspace.org/floodwatch/rasuwa-2026/"
+        }
+      ],
+      "logged_at": "2026-08-28T12:54:34Z"
+    },
+    {
       "date": "2026-08-28T07:12:00Z",
       "category": "casualty",
       "headline": "Death toll rises to 469; 100 people still trapped in a hydropower tunnel",
