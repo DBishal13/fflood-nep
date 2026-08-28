@@ -1,6 +1,19 @@
 {
   "entries": [
     {
+      "date": "2026-08-28T07:12:00Z",
+      "category": "casualty",
+      "headline": "Death toll rises to 469; 100 people still trapped in a hydropower tunnel",
+      "body": "ABC News (Australia) reports the death toll at 469 as of 28 Aug 2026, 12:57pm NPT, with more than 1,400 people reported missing overall -- both figures higher than the 389 recovered / 823 out-of-contact NDRRMA figures logged previously, though the missing count's scope/definition isn't stated, so treat it cautiously like every other missing-count figure in this timeline. More specifically verified: 350 people have been extracted from the Trishuli 3A hydropower project tunnel, with roughly 100 more still trapped there as of 2:48pm the same day -- ground access is severely hampered because the main bridge connecting the area to Kathmandu was destroyed, leaving helicopters as the only way to deliver rescue equipment. Also newly reported: river levels rose by up to 9 metres in just 30 minutes during the initial surge, and China has deployed 500 military and paramilitary personnel with helicopters to the disaster zone.",
+      "sources": [
+        {
+          "label": "ABC News Australia",
+          "url": "https://www.abc.net.au/news/2026-08-28/nepal-tibet-floods-live-updates/107086974"
+        }
+      ],
+      "logged_at": "2026-08-28T04:57:38Z"
+    },
+    {
       "date": "2026-08-27T23:19:00Z",
       "category": "other",
       "headline": "Secondary flood risk escalates: upstream lake reported rising, not stabilizing",
