@@ -1,6 +1,32 @@
 {
   "entries": [
     {
+      "date": "2026-08-28T19:00:00Z",
+      "category": "other",
+      "headline": "Immediate lake-overflow risk eased, but two upstream barrier lakes remain, not one",
+      "body": "Update to the barrier-lake breach thread: NESRA now describes two upstream barrier lakes under monitoring, not the single lake referenced when the breach was first reported -- a clarification of scale, not necessarily a new event. The immediate overflow risk that paused rescue operations has eased enough for rescue to resume, but secondary flood/landslide/avalanche risk is explicitly described as persisting 'until the lakes drain or stabilise.' Treat this as ongoing elevated risk, not resolution.",
+      "sources": [
+        {
+          "label": "NESRA FloodWatch",
+          "url": "https://nesraspace.org/floodwatch/rasuwa-2026/"
+        }
+      ],
+      "logged_at": "2026-08-28T20:55:01Z"
+    },
+    {
+      "date": "2026-08-28T19:00:00Z",
+      "category": "casualty",
+      "headline": "Recovered bodies reach 579; NDRRMA out-of-contact count nearly doubles to 1,924",
+      "body": "NDRRMA's data cutoff advanced to 19:00 NPT 28 Aug: recovered bodies now 579 (up from 547/538 six hours earlier). NDRRMA's own out-of-contact figure jumped sharply to 1,924 (from 977) -- a near-doubling that likely reflects improved reporting/reconciliation reaching remote areas rather than a sudden new wave of casualties, though this project has no way to confirm which. The separate Police compilation of 2,381 is unchanged and still explicitly not reconciled with NDRRMA's number. All figures remain provisional per NDRRMA's own framing.",
+      "sources": [
+        {
+          "label": "NESRA FloodWatch",
+          "url": "https://nesraspace.org/floodwatch/rasuwa-2026/"
+        }
+      ],
+      "logged_at": "2026-08-28T20:55:01Z"
+    },
+    {
       "date": "2026-08-28T12:08:00Z",
       "category": "other",
       "headline": "Barrier lake breach outcome: assessed manageable, not catastrophic; rescue operations resume",
@@ -68,6 +94,19 @@
         }
       ],
       "logged_at": "2026-08-28T10:54:47Z"
+    },
+    {
+      "date": "2026-08-28T06:33:00Z",
+      "category": "recovery",
+      "headline": "PM convenes Cabinet on flood response; 2 more rescued from a hydropower tunnel",
+      "body": "Prime Minister Balendra Shah convened a Cabinet meeting at Singha Durbar on 28 Aug to address flood damage, rescue, relief and reconstruction -- specific decisions weren't reported at time of writing, only that measures for relief operations and infrastructure reconstruction were to be discussed. Separately, the Nepali Army rescued 2 more people from a hydropower project tunnel in Rasuwa (project/tunnel not named in this report -- not confirmed to be the same Trishuli 3A tunnel logged earlier); a search continues for others who may remain trapped.",
+      "sources": [
+        {
+          "label": "Tribune India",
+          "url": "https://www.tribuneindia.com/news/cabinet-meeting/nepal-pm-convenes-cabinet-meeting-to-discuss-rasuwa-flood-damage-army-rescues-2-from-hydropower-tunnel"
+        }
+      ],
+      "logged_at": "2026-08-28T20:55:32Z"
     },
     {
       "date": "2026-08-27T23:19:00Z",
