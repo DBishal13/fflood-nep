@@ -14,6 +14,23 @@
       "logged_at": "2026-08-28T04:57:38Z"
     },
     {
+      "date": "2026-08-28T07:04:00Z",
+      "category": "other",
+      "headline": "BREACH: the upstream barrier lake has burst, fresh downstream flood threat",
+      "body": "The secondary hazard tracked here since the ICIMOD warning has materialized: Rasuwa Chief District Officer Narendra Pariyar reported that the Nepali Army informed him the upstream barrier lake has breached, as of 28 Aug 2026 (article updated 12:49 NPT). The lake formed near the confluence of the Chhochen Khola and Purepu Tsangpo rivers on the Chinese side of the border, with China's Ministry of Water having estimated roughly 2 million cubic metres already impounded and 3 million more expected to flow in over three days -- this specific figure had appeared in an earlier search result attributed to an unrelated 2018 article and was correctly withheld then; it is now independently confirmed via this properly-dated primary source. Severity of the breach itself (small leak vs. major release) is not yet assessed in official statements. Authorities have restricted movement along key highways, moved residents from vulnerable areas, and are conducting aerial reconnaissance from helicopters stationed in Dhunche and Rasuwa. This is now the most safety-relevant open item in this timeline -- treat any downstream water-level or evacuation information as urgent and verify directly with DHM/NDRRMA rather than relying on this log.",
+      "sources": [
+        {
+          "label": "Kathmandu Post",
+          "url": "https://kathmandupost.com/national/2026/08/28/barrier-lake-near-china-border-breaches-raising-fresh-flood-threat-in-nepal"
+        },
+        {
+          "label": "NESRA FloodWatch",
+          "url": "https://nesraspace.org/floodwatch/rasuwa-2026/"
+        }
+      ],
+      "logged_at": "2026-08-28T10:54:47Z"
+    },
+    {
       "date": "2026-08-27T23:19:00Z",
       "category": "other",
       "headline": "Secondary flood risk escalates: upstream lake reported rising, not stabilizing",

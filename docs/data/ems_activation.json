@@ -42,12 +42,12 @@
         "aoi_name": "Bidur",
         "aoi_number": 3,
         "product_type": "GRA",
-        "status": "W",
-        "expected_delivery": "2026-08-28T17:01:00",
+        "status": "I",
+        "expected_delivery": "2026-08-28T17:30:00",
         "delivery_time": null,
         "download_path": null,
         "sensors": [
-          "Legion"
+          "BlackSky"
         ]
       },
       {
@@ -55,7 +55,7 @@
         "aoi_number": 4,
         "product_type": "GRA",
         "status": "W",
-        "expected_delivery": "2026-08-28T17:01:00",
+        "expected_delivery": "2026-08-29T17:01:00",
         "delivery_time": null,
         "download_path": null,
         "sensors": [
