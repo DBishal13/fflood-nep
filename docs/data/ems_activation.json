@@ -32,8 +32,8 @@
         "product_type": "GRA",
         "status": "F",
         "expected_delivery": "2026-08-27T18:55:00",
-        "delivery_time": "2026-08-27T17:37:36.415348",
-        "download_path": "https://rapidmapping.emergency.copernicus.eu/backend/EMSR927/AOI02/GRA_PRODUCT/EMSR927_AOI02_GRA_PRODUCT_v1.zip",
+        "delivery_time": "2026-08-28T17:10:43.692032",
+        "download_path": "https://rapidmapping.emergency.copernicus.eu/backend/EMSR927/AOI02/GRA_PRODUCT/EMSR927_AOI02_GRA_PRODUCT_v2.zip",
         "sensors": [
           "Legion"
         ]
@@ -47,8 +47,8 @@
         "delivery_time": null,
         "download_path": null,
         "sensors": [
-          "Satellogic",
-          "BlackSky"
+          "BlackSky",
+          "Satellogic"
         ]
       },
       {
