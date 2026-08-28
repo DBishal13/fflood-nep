@@ -219,6 +219,23 @@
       "logged_at": "2026-08-27T06:42:52Z"
     },
     {
+      "date": "2026-08-27T00:40:00Z",
+      "category": "activation",
+      "headline": "International Charter 'Space and Major Disasters' and Sentinel Asia activated; new Sentinel-2 comparison published",
+      "body": "Beyond Copernicus EMS (already tracked here), this event has triggered broader international satellite mobilization: the International Charter 'Space and Major Disasters' (a framework coordinating contingent tasking across many space agencies' satellites for major disasters) and Sentinel Asia (a regional Asia-Pacific EO disaster network, JAXA among its members) have both been activated. Separately, the EU Space Support Office published a direct Sentinel-2 before/after comparison at Betrawati and Gerkhu: a narrow, densely-vegetated river channel on 12 Aug 2026 versus a markedly widened channel with extensive pale sediment deposits by 27 Aug -- visible confirmation of the flood's geomorphic impact, independent of every other imagery source already logged here (NRSC, Planet, EMS). NESRA FloodWatch also references a Youth Innovation Lab drone assessment (preliminary, pending review) and a formal NDRRMA Situation Brief #03 with updated mobilization figures (7,415 personnel, 239 helicopter rescues) -- not independently verified here yet, flagged for a future check.",
+      "sources": [
+        {
+          "label": "EU Space Support Office",
+          "url": "https://eu-space.europa.eu/components/earth-observation-copernicus/image-of-the-day/aftermath-nepal-flash-flood"
+        },
+        {
+          "label": "NESRA FloodWatch",
+          "url": "https://nesraspace.org/floodwatch/rasuwa-2026/"
+        }
+      ],
+      "logged_at": "2026-08-28T00:55:25Z"
+    },
+    {
       "date": "2026-08-26T20:00:00Z",
       "category": "cause",
       "headline": "Cause still disputed; casualty figures still provisional",
