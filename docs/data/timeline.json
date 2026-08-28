@@ -262,6 +262,19 @@
       "logged_at": "2026-08-28T00:55:25Z"
     },
     {
+      "date": "2026-08-27T00:00:00Z",
+      "category": "recovery",
+      "headline": "Road restoration work begins; Department of Roads deploys heavy machinery",
+      "body": "Nepal's Department of Roads has mobilized heavy machinery and deployed technical teams to several vulnerable locations along the affected corridor to begin clearing landslides and reopening damaged roads -- the first confirmed on-the-ground restoration activity for this event (distinct from damage assessment/figures already logged). No specific locations or completion timeline given yet; work is described only as underway at 'vulnerable locations' across the affected river corridor.",
+      "sources": [
+        {
+          "label": "Meroauto",
+          "url": "https://www.en.meroauto.com/flood-damages-40-km-of-roads-and-19-bridges/"
+        }
+      ],
+      "logged_at": "2026-08-28T08:54:45Z"
+    },
+    {
       "date": "2026-08-26T20:00:00Z",
       "category": "cause",
       "headline": "Cause still disputed; casualty figures still provisional",
